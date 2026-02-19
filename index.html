@@ -166,7 +166,28 @@
         .group-details.open { display: block; }
         .badge { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; background: #e2e8f0; color: #475569; }
         #cloud-loader { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.9); z-index: 100; display: flex; justify-content: center; align-items: center; flex-direction: column; font-weight: bold; color: var(--accent); }
+        
+        /* --- FIXED PRINT STYLES --- */
         #print-area { display: none; }
+        @media print {
+            body { 
+                display: block !important; 
+                height: auto !important; 
+                overflow: visible !important; 
+                background: white !important; 
+                color: black !important;
+            }
+            body > *:not(#print-area) { display: none !important; }
+            #print-area { display: block !important; width: 100%; }
+            .receipt-box { width: 80mm; margin: 0 auto; font-family: monospace; padding: 10px; border: 1px solid #000; }
+            .report-box { width: 100%; font-family: sans-serif; padding: 20px; box-sizing: border-box; }
+            .report-header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid #000; padding-bottom: 10px; }
+            .report-table { width: 100%; border-collapse: collapse; font-size: 12px; page-break-inside: auto; }
+            .report-table tr { page-break-inside: avoid; page-break-after: auto; }
+            .report-table th { background-color: #e0e0e0 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .report-table th, .report-table td { border: 1px solid #000; padding: 8px; text-align: left; }
+            .report-group-row { background-color: #f0f0f0 !important; font-weight: bold; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        }
     </style>
 </head>
 <body>
@@ -359,7 +380,6 @@
         const ADMIN_PIN = "2026"; 
         let isAdminUnlocked = false;
 
-
         const firebaseConfig = {
           apiKey: "AIzaSyAdpvuUAGnj2ixxAdjbhntd775V5FEVH9M",
           authDomain: "birhan-steel.firebaseapp.com",
@@ -394,19 +414,16 @@
             document.getElementById('loan-date').value = today; 
         }
         
-        // --- NEW SECURE TAB SWITCHING LOGIC ---
         function switchTab(id) { 
-            // Added 'reports' to the protected tabs
             const protectedTabs = ['dashboard', 'loans', 'settings', 'reports'];
 
-            // Check if the user is trying to access a protected tab and hasn't unlocked it yet
             if (protectedTabs.includes(id) && !isAdminUnlocked) {
                 const enteredPin = prompt("Admin Access Required. Enter PIN:");
                 if (enteredPin === ADMIN_PIN) {
-                    isAdminUnlocked = true; // Unlock for the rest of this session
+                    isAdminUnlocked = true; 
                 } else {
                     alert("Incorrect PIN. Access Denied.");
-                    return; // Stop the function here so the tab doesn't change
+                    return; 
                 }
             }
 
@@ -415,7 +432,6 @@
             
             document.getElementById(id).classList.add('active'); 
             
-            // Highlight the correct navigation button
             const activeBtn = document.querySelector(`.nav-btn[onclick="switchTab('${id}')"]`);
             if(activeBtn) activeBtn.classList.add('active');
             
@@ -548,7 +564,6 @@
             const opts = `<option value="">-- Select --</option>` + app.inventory.map(i => `<option value="${i.id}">${i.type} ${i.dimensions} - ${i.location} (${i.qty})</option>`).join('');
             document.getElementById('sale-item').innerHTML = opts; document.getElementById('purch-item').innerHTML = opts;
             
-            // ADMIN REPORT (With Money)
             let totalVal = 0;
             document.getElementById('report-table-body').innerHTML = app.inventory.map(i => {
                 const val = i.price * i.qty; totalVal += val;
@@ -556,7 +571,6 @@
             }).join('');
             document.getElementById('report-total-value').innerText = formatMoney(totalVal);
 
-            // WORKER REPORT (No Money)
             document.getElementById('worker-report-table-body').innerHTML = app.inventory.map(i => {
                 return `<tr><td>${i.type} ${i.dimensions} (${i.thickness})</td><td>${i.location}</td><td style="font-weight:bold;">${i.qty}</td></tr>`;
             }).join('');
@@ -605,7 +619,6 @@
             const html = `<div class="report-box"><div class="report-header"><h2>BIRHAN STEEL</h2><h3>Daily Stock Entry Report: ${date}</h3></div><table class="report-table"><thead><tr><th>Supplier</th><th>Item</th><th>Qty Added</th></tr></thead><tbody>${entries.map(p => `<tr><td>${p.supplier||'-'}</td><td>${getItemName(p.itemId)}</td><td>${p.qty}</td></tr>`).join('')}</tbody></table></div>`;
             document.getElementById('print-area').innerHTML = html; window.print();
         }
-        
         function printStockReport() {
             const date = new Date().toLocaleDateString();
             let totalVal = 0;
