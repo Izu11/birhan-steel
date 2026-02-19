@@ -306,10 +306,12 @@
                     </div>
                     <div class="inv-details">
                         <table>
-                            <thead><tr><th>Dim</th><th>Loc</th><th>Price</th><th>Qty</th><th>Action</th></tr></thead>
+                            <thead><tr><th>Dim</th><th>Thick</th><th>Len</th><th>Loc</th><th>Price</th><th>Qty</th><th>Action</th></tr></thead>
                             <tbody>${items.map(i => `
                                 <tr>
-                                    <td>${i.dimensions} (${i.thickness})</td>
+                                    <td>${i.dimensions}</td>
+                                    <td>${i.thickness || '-'}</td>
+                                    <td>${i.length || '-'}</td>
                                     <td>${i.location}</td>
                                     <td>${formatMoney(i.price)}</td>
                                     <td style="color:${i.qty<20?'#ef4444':'inherit'}"><b>${i.qty}</b></td>
