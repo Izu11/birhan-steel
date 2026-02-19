@@ -54,12 +54,21 @@
         .btn-danger { background: var(--danger); color: white; }
         .btn-outline { background: white; border: 2px solid var(--border); color: var(--text-main); }
         
-        /* Tables */
-        .table-container { background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow); border: 1px solid var(--border); overflow: hidden; }
+        /* Tables & Groups */
+        .table-container { background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow); border: 1px solid var(--border); overflow: hidden; margin-bottom: 20px; }
         table { width: 100%; border-collapse: collapse; }
         th { background: #f8fafc; color: var(--text-muted); font-size: 0.75rem; padding: 15px 20px; text-align: left; border-bottom: 2px solid var(--border); }
-        td { padding: 16px 20px; border-bottom: 1px solid var(--border); }
+        td { padding: 16px 20px; border-bottom: 1px solid #f1f5f9; }
         .badge { padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; background: #e2e8f0; }
+
+        /* Report Specific Styles */
+        .report-group-header { 
+            background: #f8fafc; padding: 15px 20px; cursor: pointer; border-bottom: 1px solid var(--border);
+            display: flex; justify-content: space-between; align-items: center; transition: 0.2s;
+        }
+        .report-group-header:hover { background: #e2e8f0; }
+        .report-group-content { display: none; }
+        .report-group-content.open { display: table-row-group; }
 
         /* Loader */
         #loader { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.9); z-index: 100; display: flex; justify-content: center; align-items: center; flex-direction: column; }
@@ -73,6 +82,7 @@
             .report-table { width: 100%; border-collapse: collapse; margin-top: 15px; }
             .report-table th, .report-table td { border: 1px solid #000; padding: 8px; text-align: left; }
             .report-group-row { background-color: #f0f0f0 !important; font-weight: bold; -webkit-print-color-adjust: exact; }
+            .report-group-content { display: table-row-group !important; }
         }
     </style>
 </head>
@@ -117,7 +127,7 @@
         </section>
 
         <section id="inventory" class="section">
-            <div class="flex-between"><h1>Inventory</h1><input type="text" id="searchInput" class="form-control" placeholder="🔍 Search..." style="width:300px;" onkeyup="renderInventory()"></div>
+            <div class="flex-between"><h1>Inventory Management</h1><input type="text" id="searchInput" class="form-control" placeholder="🔍 Search..." style="width:300px;" onkeyup="renderInventory()"></div>
             <div class="panel">
                 <h3>Add New Product</h3>
                 <form id="add-item-form">
@@ -140,44 +150,17 @@
             <div id="inventory-container"></div>
         </section>
 
-        <section id="sales" class="section">
-            <h1>Sales Management</h1>
-            <div class="panel">
-                <form id="sales-form">
-                    <div class="form-row">
-                        <div class="form-group"><label>Date</label><input type="date" id="sale-date" class="form-control" required></div>
-                        <div class="form-group"><label>Customer</label><input type="text" id="sale-customer" class="form-control"></div>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group"><label>Product</label><select id="sale-item" class="form-control" required></select></div>
-                        <div class="form-group"><label>Qty</label><input type="number" id="sale-qty" class="form-control" required></div>
-                    </div>
-                    <button type="submit" class="btn btn-success" style="width:100%">Confirm Sale</button>
-                </form>
-            </div>
-            <div id="sales-history-container"></div>
-        </section>
-
-        <section id="purchases" class="section">
-            <h1>Stock Entry</h1>
-            <div class="panel">
-                <form id="purchase-form">
-                    <div class="form-group"><label>Date</label><input type="date" id="purch-date" class="form-control" required></div>
-                    <div class="form-group"><label>Product</label><select id="purch-item" class="form-control" required></select></div>
-                    <div class="form-row">
-                        <div class="form-group"><label>Qty Added</label><input type="number" id="purch-qty" class="form-control" required></div>
-                        <div class="form-group"><label>Supplier</label><input type="text" id="purch-supp" class="form-control"></div>
-                    </div>
-                    <button type="submit" class="btn btn-primary">Add Stock</button>
-                </form>
-            </div>
-        </section>
-
         <section id="reports" class="section">
-            <div class="flex-between"><h1>Current Stock Report</h1><button class="btn btn-outline" onclick="printStockReport()">🖨️ Print Report</button></div>
-            <div class="table-container">
-                <table><thead><tr><th>Product</th><th>Loc</th><th>Price</th><th>Qty</th><th>Value</th></tr></thead><tbody id="report-table-body"></tbody>
-                <tfoot><tr style="background:#f1f5f9; font-weight:bold;"><td colspan="4" style="text-align:right;">TOTAL VALUE:</td><td id="report-total-value">ETB 0</td></tr></tfoot></table>
+            <div class="flex-between">
+                <h1>Current Stock Report</h1>
+                <button class="btn btn-outline" onclick="printStockReport()">🖨️ Print Grouped Report</button>
+            </div>
+            <div id="grouped-report-container"></div>
+            <div class="panel" style="margin-top: 20px;">
+                <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 1.2rem;">
+                    <span>GRAND TOTAL ASSET VALUE:</span>
+                    <span id="report-total-value" style="color: var(--accent);">ETB 0.00</span>
+                </div>
             </div>
         </section>
 
@@ -187,12 +170,12 @@
                 <button class="btn btn-danger" onclick="wipeData()">🗑️ Reset All Data</button>
             </div>
         </section>
-    </main>
+
+        </main>
 
     <div id="print-area"></div>
 
     <script>
-        // --- FIREBASE CONFIGURATION ---
         const firebaseConfig = {
             apiKey: "AIzaSyAdpvuUAGnj2ixxAdjbhntd775V5FEVH9M",
             authDomain: "birhan-steel.firebaseapp.com",
@@ -208,13 +191,11 @@
         let app = { inventory: [], sales: [] };
         const LOW_STOCK_THRESHOLD = 20;
 
-        // REAL-TIME CLOUD SYNC
         db.collection('birhan_data').doc('main').onSnapshot((doc) => {
             document.getElementById('loader').style.display = 'none';
             if (doc.exists) {
                 app = doc.data();
                 if(!app.inventory) app.inventory = [];
-                if(!app.sales) app.sales = [];
                 refresh();
             } else { saveToCloud(); }
         });
@@ -222,22 +203,83 @@
         function saveToCloud() { db.collection('birhan_data').doc('main').set(app); }
         function switchTab(id) { document.querySelectorAll('.section').forEach(el => el.classList.remove('active')); document.getElementById(id).classList.add('active'); }
         function formatMoney(n) { return 'ETB ' + parseFloat(n).toLocaleString('en-ET', {minimumFractionDigits:2}); }
-        function getItemName(id) { 
-            const i = app.inventory.find(x => x.id == id); 
-            return i ? `${i.type} ${i.dimensions} (${i.thickness})` : 'Unknown'; 
-        }
 
         function refresh() {
-            renderDashboard(); renderInventory(); renderSalesHistory();
-            const opts = `<option value="">-- Select --</option>` + app.inventory.map(i => `<option value="${i.id}">${i.type} ${i.dimensions} (${i.qty})</option>`).join('');
-            document.getElementById('sale-item').innerHTML = opts; document.getElementById('purch-item').innerHTML = opts;
+            renderDashboard(); 
+            renderInventory(); 
+            renderGroupedReport(); 
+        }
+
+        // --- NEW DROPDOWN REPORT LOGIC ---
+        function renderGroupedReport() {
+            const container = document.getElementById('grouped-report-container');
+            const types = [...new Set(app.inventory.map(i => i.type))].sort();
+            let totalAssetValue = 0;
             
-            let total = 0;
-            document.getElementById('report-table-body').innerHTML = app.inventory.map(i => {
-                const val = i.price * i.qty; total += val;
-                return `<tr><td>${i.type} ${i.dimensions} (${i.thickness})</td><td>${i.location}</td><td>${formatMoney(i.price)}</td><td>${i.qty}</td><td>${formatMoney(val)}</td></tr>`;
+            let html = types.map(type => {
+                const items = app.inventory.filter(i => i.type === type);
+                const groupTotal = items.reduce((sum, i) => sum + (i.price * i.qty), 0);
+                totalAssetValue += groupTotal;
+
+                return `
+                <div class="table-container">
+                    <div class="report-group-header" onclick="toggleReportGroup(this)">
+                        <span style="font-weight: bold; font-size: 1rem;">📂 ${type}</span>
+                        <span style="font-size: 0.9rem; color: var(--text-muted);">${items.length} Items | Total: ${formatMoney(groupTotal)} ▼</span>
+                    </div>
+                    <table class="report-group-content">
+                        <thead>
+                            <tr><th>Dimensions</th><th>Location</th><th>Price</th><th>Qty</th><th>Value</th></tr>
+                        </thead>
+                        <tbody>
+                            ${items.map(i => `
+                                <tr>
+                                    <td>${i.dimensions} (${i.thickness})</td>
+                                    <td><span class="badge">${i.location}</span></td>
+                                    <td>${formatMoney(i.price)}</td>
+                                    <td>${i.qty}</td>
+                                    <td style="font-weight: bold;">${formatMoney(i.price * i.qty)}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>`;
             }).join('');
-            document.getElementById('report-total-value').innerText = formatMoney(total);
+
+            container.innerHTML = html || '<p style="text-align:center; padding:20px;">No inventory data available.</p>';
+            document.getElementById('report-total-value').innerText = formatMoney(totalAssetValue);
+        }
+
+        function toggleReportGroup(header) {
+            const table = header.nextElementSibling;
+            table.classList.toggle('open');
+        }
+
+        // --- RENDER INVENTORY (DROPDOWNS ALREADY EXIST HERE) ---
+        function renderInventory() {
+            const term = document.getElementById('searchInput').value.toLowerCase();
+            const filtered = app.inventory.filter(i => (i.type||"").toLowerCase().includes(term) || (i.dimensions||"").toLowerCase().includes(term));
+            const groups = {}; filtered.forEach(item => { if(!groups[item.type]) groups[item.type] = []; groups[item.type].push(item); });
+            
+            document.getElementById('inventory-container').innerHTML = Object.keys(groups).sort().map(type => {
+                const items = groups[type];
+                return `<div class="table-container">
+                    <div class="report-group-header" onclick="toggleReportGroup(this)">
+                        <span style="font-weight:bold;">📂 ${type}</span>
+                        <span>${items.length} Sizes ▼</span>
+                    </div>
+                    <table class="report-group-content">
+                        <thead><tr><th>Dim</th><th>Thick</th><th>Loc</th><th>Price</th><th>Qty</th><th>Action</th></tr></thead>
+                        <tbody>${items.map(i => `
+                            <tr>
+                                <td>${i.dimensions}</td><td>${i.thickness}</td><td><span class="badge">${i.location}</span></td>
+                                <td>${formatMoney(i.price)}</td><td>${i.qty}</td>
+                                <td><button class="btn btn-danger btn-sm" onclick="delItem('${i.id}')">Del</button></td>
+                            </tr>`).join('')}
+                        </tbody>
+                    </table>
+                </div>`;
+            }).join('');
         }
 
         function renderDashboard() {
@@ -253,38 +295,34 @@
             } else { document.getElementById('low-stock-section').style.display = 'none'; }
         }
 
-        function renderInventory() {
-            const term = document.getElementById('searchInput').value.toLowerCase();
-            const filtered = app.inventory.filter(i => (i.type||"").toLowerCase().includes(term) || (i.dimensions||"").toLowerCase().includes(term));
-            const groups = {}; filtered.forEach(item => { if(!groups[item.type]) groups[item.type] = []; groups[item.type].push(item); });
-            
-            document.getElementById('inventory-container').innerHTML = Object.keys(groups).sort().map(type => {
-                const items = groups[type];
-                return `<div class="panel" style="padding:0; overflow:hidden;">
-                    <div class="group-header" onclick="this.nextElementSibling.classList.toggle('open')"><b>📂 ${type}</b><span>${items.length} Items ▼</span></div>
-                    <div class="group-details"><table><thead><tr><th>Dim</th><th>Thick</th><th>Loc</th><th>Price</th><th>Qty</th><th>Action</th></tr></thead>
-                    <tbody>${items.map(i => `<tr><td>${i.dimensions}</td><td>${i.thickness}</td><td><span class="badge">${i.location}</span></td><td>${formatMoney(i.price)}</td><td>${i.qty}</td>
-                    <td><button class="btn btn-warning btn-sm" onclick="duplicateItem('${i.id}')">Copy</button> <button class="btn btn-danger btn-sm" onclick="delItem('${i.id}')">Del</button></td></tr>`).join('')}</tbody></table></div></div>`;
+        // --- LOGIC FUNCTIONS ---
+        function delItem(id) { if(confirm("Delete item?")) { app.inventory = app.inventory.filter(i => i.id != id); saveToCloud(); } }
+        function wipeData() { if(confirm("ERASE EVERYTHING?")) { app = { inventory: [], sales: [] }; saveToCloud(); } }
+
+        function printStockReport() {
+            const types = [...new Set(app.inventory.map(i => i.type))].sort();
+            let totalAsset = 0;
+            let rows = types.map(t => {
+                const items = app.inventory.filter(i => i.type === t);
+                const groupRows = items.map(i => {
+                    totalAsset += (i.price * i.qty);
+                    return `<tr><td>${i.dimensions} (${i.thickness})</td><td>${i.location}</td><td>${formatMoney(i.price)}</td><td>${i.qty}</td><td>${formatMoney(i.price*i.qty)}</td></tr>`;
+                }).join('');
+                return `<tr class="report-group-row"><td colspan="5">📂 ${t}</td></tr>` + groupRows;
             }).join('');
+
+            document.getElementById('print-area').innerHTML = `
+                <div class="report-box">
+                    <h2>BIRHAN STEEL - Current Stock</h2>
+                    <table class="report-table">
+                        <thead><tr><th>Dim</th><th>Loc</th><th>Price</th><th>Qty</th><th>Value</th></tr></thead>
+                        <tbody>${rows}</tbody>
+                        <tfoot><tr><td colspan="4" style="text-align:right; font-weight:bold;">TOTAL ASSET VALUE:</td><td style="font-weight:bold;">${formatMoney(totalAsset)}</td></tr></tfoot>
+                    </table>
+                </div>`;
+            window.print();
         }
 
-        function renderSalesHistory() {
-            const groups = {};
-            app.sales.forEach(s => { if(!groups[s.date]) groups[s.date] = []; groups[s.date].push(s); });
-            const sortedDates = Object.keys(groups).sort().reverse();
-
-            document.getElementById('sales-history-container').innerHTML = sortedDates.map(date => {
-                const sales = groups[date];
-                const total = sales.reduce((sum, s) => sum + s.total, 0);
-                return `<div class="panel" style="padding:0; overflow:hidden;">
-                    <div class="group-header" style="background:#f8fafc;"><b>📅 ${date}</b><span style="color:green; font-weight:bold;">Total: ${formatMoney(total)}</span></div>
-                    <table><thead><tr><th>Client</th><th>Item</th><th>Qty</th><th>Total</th><th>Action</th></tr></thead>
-                    <tbody>${sales.map(s => `<tr><td>${s.customer||'-'}</td><td>${getItemName(s.itemId)}</td><td>${s.qty}</td><td>${formatMoney(s.total)}</td>
-                    <td><button class="btn btn-outline btn-sm" onclick="printReceipt('${s.id}')">Print</button> <button class="btn btn-danger btn-sm" onclick="deleteSale('${s.id}')">Delete</button></td></tr>`).join('')}</tbody></table></div>`;
-            }).join('');
-        }
-
-        // Logic Functions
         document.getElementById('add-item-form').addEventListener('submit', e => {
             e.preventDefault();
             const newItem = {
@@ -292,59 +330,14 @@
                 type: document.getElementById('item-type').value,
                 dimensions: document.getElementById('item-dim').value,
                 thickness: document.getElementById('item-thick').value,
-                length: document.getElementById('item-len').value,
                 price: parseFloat(document.getElementById('item-price').value),
                 qty: parseInt(document.getElementById('item-qty').value),
                 location: document.getElementById('item-loc').value
             };
-            const exist = app.inventory.find(i => i.type === newItem.type && i.dimensions === newItem.dimensions && i.location === newItem.location);
-            if(exist) { exist.qty += newItem.qty; exist.price = newItem.price; } else { app.inventory.push(newItem); }
+            app.inventory.push(newItem);
             saveToCloud(); e.target.reset();
         });
 
-        document.getElementById('sales-form').addEventListener('submit', e => {
-            e.preventDefault();
-            const id = document.getElementById('sale-item').value;
-            const qty = parseInt(document.getElementById('sale-qty').value);
-            const item = app.inventory.find(i => i.id == id);
-            if(item && item.qty >= qty) {
-                item.qty -= qty;
-                const sale = { id: Date.now().toString(), date: document.getElementById('sale-date').value, itemId: id, qty, customer: document.getElementById('sale-customer').value, total: qty*item.price };
-                app.sales.push(sale); saveToCloud(); e.target.reset(); setDates();
-            } else { alert("Low Stock!"); }
-        });
-
-        function delItem(id) { if(confirm("Delete item?")) { app.inventory = app.inventory.filter(i => i.id != id); saveToCloud(); } }
-        function deleteSale(id) { 
-            if(confirm("Delete sale and return stock?")) {
-                const s = app.sales.find(x => x.id == id);
-                const i = app.inventory.find(x => x.id == s.itemId);
-                if(i) i.qty += s.qty;
-                app.sales = app.sales.filter(x => x.id != id);
-                saveToCloud();
-            }
-        }
-        function duplicateItem(id) { const i = app.inventory.find(x => x.id == id); if(i) { document.getElementById('item-type').value = i.type; document.getElementById('item-dim').value = i.dimensions; document.getElementById('item-thick').value = i.thickness; document.getElementById('item-price').value = i.price; window.scrollTo(0,0); } }
-        function wipeData() { if(confirm("ERASE EVERYTHING?")) { app = { inventory: [], sales: [] }; saveToCloud(); } }
-        
-        function printStockReport() {
-            const types = [...new Set(app.inventory.map(i => i.type))].sort();
-            let rows = types.map(t => {
-                const items = app.inventory.filter(i => i.type === t);
-                return `<tr class="report-group-row"><td colspan="5">📂 ${t}</td></tr>` + items.map(i => `<tr><td>${i.dimensions} (${i.thickness})</td><td>${i.location}</td><td>${formatMoney(i.price)}</td><td>${i.qty}</td><td>${formatMoney(i.price*i.qty)}</td></tr>`).join('');
-            }).join('');
-            document.getElementById('print-area').innerHTML = `<div class="report-box"><h2>BIRHAN STEEL - Stock Report</h2><table class="report-table"><thead><tr><th>Dim</th><th>Loc</th><th>Price</th><th>Qty</th><th>Value</th></tr></thead><tbody>${rows}</tbody></table></div>`;
-            window.print();
-        }
-
-        function printReceipt(id) {
-            const s = app.sales.find(x => x.id == id);
-            document.getElementById('print-area').innerHTML = `<div class="report-box" style="width:80mm; border:1px solid #000;"><h3>BIRHAN STEEL</h3>Date: ${s.date}<br>Client: ${s.customer||'Walk-in'}<hr>${getItemName(s.itemId)} x ${s.qty}<br><b>Total: ${formatMoney(s.total)}</b></div>`;
-            window.print();
-        }
-
-        function setDates() { document.getElementById('sale-date').value = new Date().toISOString().split('T')[0]; }
-        setDates();
     </script>
 </body>
 </html>
