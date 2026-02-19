@@ -116,7 +116,7 @@
                 padding-top: 0; 
                 overflow-x: auto; 
                 border-top: 1px solid #475569;
-                scrollbar-width: none; /* Hide scrollbar for clean look */
+                scrollbar-width: none; 
             }
             .nav-items::-webkit-scrollbar { display: none; }
             .nav-btn { 
@@ -161,34 +161,25 @@
         .form-group { margin-bottom: 20px; }
         .form-group label { display: block; margin-bottom: 8px; font-weight: 600; font-size: 0.9rem; color: var(--text-main); }
         .form-control { width: 100%; padding: 12px 16px; border: 2px solid var(--border); border-radius: 8px; font-size: 1rem; background: #f8fafc; }
-        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        
-        .btn { padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-size: 0.95rem; font-weight: 600; transition: transform 0.1s; }
-        .btn:active { transform: scale(0.98); }
+        .btn { padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-size: 0.95rem; font-weight: 600; }
         .btn-primary { background: var(--accent); color: white; }
         .btn-success { background: var(--success); color: white; }
         .btn-danger { background: var(--danger); color: white; }
-        .btn-warning { background: var(--warning); color: white; }
         .btn-outline { background: white; border: 2px solid var(--border); color: var(--text-main); }
+        .btn-warning { background: var(--warning); color: white; }
         .btn-sm { padding: 6px 12px; font-size: 0.85rem; border-radius: 6px; }
-
-        /* THIS IS THE CRITICAL CLASS FOR SWIPING TABLES ON MOBILE */
+        
         .table-container { background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow); border: 1px solid var(--border); overflow-x: auto; -webkit-overflow-scrolling: touch; }
         
         table { width: 100%; border-collapse: collapse; }
         th { background: #f8fafc; color: var(--text-muted); font-weight: 700; text-transform: uppercase; font-size: 0.75rem; padding: 15px 20px; border-bottom: 2px solid var(--border); text-align: left; }
         td { padding: 16px 20px; border-bottom: 1px solid var(--border); color: var(--text-main); font-size: 0.95rem; }
-        tr:hover td { background-color: #f8fafc; }
-
         .group-header { background: #f8fafc; padding: 18px 25px; cursor: pointer; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
         .group-details { display: none; background: white; border-bottom: 1px solid var(--border); }
         .group-details.open { display: block; }
-        .flex-between { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
         .badge { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; background: #e2e8f0; color: #475569; }
-
-        /* --- LOADER --- */
         #cloud-loader { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.9); z-index: 100; display: flex; justify-content: center; align-items: center; flex-direction: column; font-weight: bold; color: var(--accent); }
-
+        
         /* --- FIXED PRINT STYLES FOR PAGINATION --- */
         #print-area { display: none; }
         @media print {
@@ -389,11 +380,11 @@
             </div>
             <div class="table-container">
                 <table>
-                    <thead><tr><th>Product</th><th>Location</th><th>Unit Price</th><th>Qty</th><th>Total Value</th><th>Expected Profit</th></tr></thead>
+                    <thead><tr><th>Product</th><th>Location</th><th>Purch. Price</th><th>Unit Price</th><th>Qty</th><th>Total Value</th><th>Expected Profit</th></tr></thead>
                     <tbody id="report-table-body"></tbody>
                     <tfoot>
                         <tr style="background:#f1f5f9; font-weight:bold;">
-                            <td colspan="4" style="text-align:right;">GRAND TOTAL ASSET VALUE:</td>
+                            <td colspan="5" style="text-align:right;">GRAND TOTAL ASSET VALUE:</td>
                             <td id="report-total-value" style="color:var(--primary);">ETB 0.00</td>
                             <td id="report-total-profit" style="color:var(--success);">ETB 0.00</td>
                         </tr>
@@ -460,13 +451,10 @@
                 const enteredPin = prompt("Admin Access Required. Enter PIN:");
                 if (enteredPin === ADMIN_PIN) {
                     isAdminUnlocked = true;
-                    // Hide the login button
                     document.getElementById('btn-admin-login').style.display = 'none';
-                    // Show all admin buttons
                     document.querySelectorAll('.admin-only').forEach(btn => {
                         btn.style.display = 'flex'; 
                     });
-                    // Automatically switch to the dashboard
                     switchTab('dashboard');
                 } else {
                     alert("Incorrect PIN. Access Denied.");
@@ -535,7 +523,8 @@
             let html = '';
             Object.keys(groups).sort().forEach(type => {
                 const items = groups[type].sort((a,b) => (a.dimensions||"").localeCompare(b.dimensions||"", undefined, {numeric:true}));
-                html += `<div class="group-header" onclick="this.nextElementSibling.classList.toggle('open')"><div><span style="font-weight:bold; color:var(--primary);">📂 ${type}</span></div><div style="font-size:0.9rem;">${items.length} Items ▼</div></div><div class="group-details"><div class="table-container"><table><thead><tr><th>Dim</th><th>Thick/Len</th><th>Loc</th><th>Price</th><th>Qty</th><th>Actions</th></tr></thead><tbody>${items.map(i => `<tr><td><b>${i.dimensions}</b></td><td>${i.thickness} / ${i.length}</td><td><span class="badge">${i.location}</span></td><td>${formatMoney(i.price)}</td><td style="color:${i.qty<LOW_STOCK_THRESHOLD?'var(--danger)':'inherit'}; font-weight:bold;">${i.qty}</td><td><button class="btn btn-warning btn-sm" onclick="duplicateItem('${i.id}')">Edit</button> <button class="btn btn-danger btn-sm" onclick="delItem('${i.id}')">Del</button></td></tr>`).join('')}</tbody></table></div></div>`;
+                // NEW: Added Cost Added header and icon
+                html += `<div class="group-header" onclick="this.nextElementSibling.classList.toggle('open')"><div><span style="font-weight:bold; color:var(--primary);">📂 ${type}</span></div><div style="font-size:0.9rem;">${items.length} Items ▼</div></div><div class="group-details"><div class="table-container"><table><thead><tr><th>Dim</th><th>Thick/Len</th><th>Loc</th><th>Price</th><th style="text-align:center;">Cost Added</th><th>Qty</th><th>Actions</th></tr></thead><tbody>${items.map(i => `<tr><td><b>${i.dimensions}</b></td><td>${i.thickness} / ${i.length}</td><td><span class="badge">${i.location}</span></td><td>${formatMoney(i.price)}</td><td style="text-align:center;">${i.purchPrice ? '✅' : '-'}</td><td style="color:${i.qty<LOW_STOCK_THRESHOLD?'var(--danger)':'inherit'}; font-weight:bold;">${i.qty}</td><td><button class="btn btn-warning btn-sm" onclick="duplicateItem('${i.id}')">Edit</button> <button class="btn btn-danger btn-sm" onclick="delItem('${i.id}')">Del</button></td></tr>`).join('')}</tbody></table></div></div>`;
             });
             document.getElementById('inventory-container').innerHTML = html || '<div style="padding:20px;">No items.</div>';
             const types = [...new Set(app.inventory.map(i => i.type))].sort(); document.getElementById('list-types').innerHTML = types.map(t=>`<option value="${t}">`).join('');
@@ -568,7 +557,7 @@
             document.getElementById('item-dim').value = item.dimensions; 
             document.getElementById('item-thick').value = item.thickness; 
             document.getElementById('item-len').value = item.length; 
-            document.getElementById('item-purch-price').value = item.purchPrice || 0; // NEW
+            document.getElementById('item-purch-price').value = item.purchPrice || 0; 
             document.getElementById('item-price').value = item.price; 
             document.getElementById('item-qty').value = 0; 
             document.getElementById('item-loc').value = item.location;
@@ -582,7 +571,7 @@
             const thick = document.getElementById('item-thick').value.trim() || '-';
             const len = document.getElementById('item-len').value.trim() || '-';
             const loc = document.getElementById('item-loc').value; 
-            const purchPrice = parseFloat(document.getElementById('item-purch-price').value); // NEW
+            const purchPrice = parseFloat(document.getElementById('item-purch-price').value); 
             const price = parseFloat(document.getElementById('item-price').value);
             const qty = parseInt(document.getElementById('item-qty').value);
             
@@ -590,7 +579,7 @@
             if(exist) { 
                 exist.qty += qty; 
                 exist.price = price; 
-                exist.purchPrice = purchPrice; // Update purchase price
+                exist.purchPrice = purchPrice; 
             } else { 
                 app.inventory.push({ id: Date.now().toString(), type, dimensions: dim, thickness: thick, length: len, purchPrice, price, qty, location: loc }); 
             }
@@ -639,17 +628,18 @@
             const opts = `<option value="">-- Select --</option>` + app.inventory.map(i => `<option value="${i.id}">${i.type} ${i.dimensions} - ${i.location} (${i.qty})</option>`).join('');
             document.getElementById('sale-item').innerHTML = opts; document.getElementById('purch-item').innerHTML = opts;
             
-            // ADMIN REPORT (With Money & Expected Profit)
+            // ADMIN REPORT (With Purchase Price, Total Value & Expected Profit)
             let totalVal = 0;
             let totalProfit = 0;
             
             document.getElementById('report-table-body').innerHTML = app.inventory.map(i => {
                 const val = i.price * i.qty; 
-                const profit = (i.price - (i.purchPrice || 0)) * i.qty; // Calculate Expected Profit
+                const profit = (i.price - (i.purchPrice || 0)) * i.qty; 
                 totalVal += val;
                 totalProfit += profit;
                 
-                return `<tr><td>${i.type} ${i.dimensions} (${i.thickness})</td><td>${i.location}</td><td>${formatMoney(i.price)}</td><td>${i.qty}</td><td style="font-weight:bold;">${formatMoney(val)}</td><td style="color:var(--success); font-weight:bold;">${formatMoney(profit)}</td></tr>`;
+                // NEW: Added ${formatMoney(i.purchPrice || 0)} column
+                return `<tr><td>${i.type} ${i.dimensions} (${i.thickness})</td><td>${i.location}</td><td>${formatMoney(i.purchPrice || 0)}</td><td>${formatMoney(i.price)}</td><td>${i.qty}</td><td style="font-weight:bold;">${formatMoney(val)}</td><td style="color:var(--success); font-weight:bold;">${formatMoney(profit)}</td></tr>`;
             }).join('');
             
             document.getElementById('report-total-value').innerText = formatMoney(totalVal);
@@ -708,20 +698,21 @@
         function printStockReport() {
             const date = new Date().toLocaleDateString();
             let totalVal = 0;
-            let totalProfit = 0; // NEW
-            
+            let totalProfit = 0;
             const types = [...new Set(app.inventory.map(i => i.type))].sort();
             let rows = types.map(t => {
                 const items = app.inventory.filter(i => i.type === t);
-                return `<tr class="report-group-row"><td colspan="6">📂 ${t}</td></tr>` + items.map(i => {
+                // NEW: colspan updated to 7 for print layout
+                return `<tr class="report-group-row"><td colspan="7">📂 ${t}</td></tr>` + items.map(i => {
                     const val = i.price * i.qty; 
-                    const profit = (i.price - (i.purchPrice || 0)) * i.qty; // NEW
+                    const profit = (i.price - (i.purchPrice || 0)) * i.qty;
                     totalVal += val;
-                    totalProfit += profit; // NEW
-                    return `<tr><td>${i.dimensions} (${i.thickness})</td><td>${i.location}</td><td>${formatMoney(i.price)}</td><td>${i.qty}</td><td style="text-align:right;">${formatMoney(val)}</td><td style="text-align:right; color:green;">${formatMoney(profit)}</td></tr>`;
+                    totalProfit += profit;
+                    return `<tr><td>${i.dimensions} (${i.thickness})</td><td>${i.location}</td><td>${formatMoney(i.purchPrice || 0)}</td><td>${formatMoney(i.price)}</td><td>${i.qty}</td><td style="text-align:right;">${formatMoney(val)}</td><td style="text-align:right; color:green;">${formatMoney(profit)}</td></tr>`;
                 }).join('');
             }).join('');
-            document.getElementById('print-area').innerHTML = `<div class="report-box"><div class="report-header"><h2>BIRHAN STEEL</h2><h3>Current Stock Report</h3><p>Generated: ${date}</p></div><table class="report-table"><thead><tr><th>Product</th><th>Location</th><th>Unit Price</th><th>Qty</th><th>Total Value</th><th>Expected Profit</th></tr></thead><tbody>${rows}</tbody><tfoot><tr><td colspan="4" style="text-align:right; font-weight:bold;">GRAND TOTAL:</td><td style="text-align:right; font-weight:bold;">${formatMoney(totalVal)}</td><td style="text-align:right; font-weight:bold; color:green;">${formatMoney(totalProfit)}</td></tr></tfoot></table></div>`;
+            // NEW: Print HTML table headers updated
+            document.getElementById('print-area').innerHTML = `<div class="report-box"><div class="report-header"><h2>BIRHAN STEEL</h2><h3>Current Stock Report</h3><p>Generated: ${date}</p></div><table class="report-table"><thead><tr><th>Product</th><th>Location</th><th>Purch. Price</th><th>Unit Price</th><th>Qty</th><th>Total Value</th><th>Expected Profit</th></tr></thead><tbody>${rows}</tbody><tfoot><tr><td colspan="5" style="text-align:right; font-weight:bold;">GRAND TOTAL:</td><td style="text-align:right; font-weight:bold;">${formatMoney(totalVal)}</td><td style="text-align:right; font-weight:bold; color:green;">${formatMoney(totalProfit)}</td></tr></tfoot></table></div>`;
             window.print();
         }
 
