@@ -179,18 +179,18 @@
             <h2>BIRHAN STEEL</h2>
         </div>
         <div class="nav-items">
-            <button class="nav-btn active" onclick="switchTab('dashboard')">📊 Dash</button>
-            <button class="nav-btn" onclick="switchTab('inventory')">📦 Stock</button>
+            <button class="nav-btn" onclick="switchTab('dashboard')">📊 Dash (Admin)</button>
+            <button class="nav-btn active" onclick="switchTab('inventory')">📦 Stock</button>
             <button class="nav-btn" onclick="switchTab('sales')">💰 Sales</button>
             <button class="nav-btn" onclick="switchTab('purchases')">📥 Entry</button>
-            <button class="nav-btn" onclick="switchTab('loans')">🤝 Loans</button>
+            <button class="nav-btn" onclick="switchTab('loans')">🤝 Loans (Admin)</button>
             <button class="nav-btn" onclick="switchTab('reports')">📋 Report</button>
-            <button class="nav-btn" onclick="switchTab('settings')">🛠️ Settings</button>
+            <button class="nav-btn" onclick="switchTab('settings')">🛠️ Settings (Admin)</button>
         </div>
     </aside>
 
     <main class="main-content">
-        <section id="dashboard" class="section active">
+        <section id="dashboard" class="section">
             <h1>Overview</h1>
             <div class="grid-cards">
                 <div class="card"><h3>Stock Value (Cambridge)</h3><div class="value" id="dash-value-cambridge">ETB 0</div></div>
@@ -218,7 +218,7 @@
             </div>
         </section>
 
-        <section id="inventory" class="section">
+        <section id="inventory" class="section active">
             <div class="flex-between">
                 <h1>Inventory Management</h1>
                 <input type="text" id="searchInput" class="form-control" placeholder="🔍 Search..." style="width: 300px;" onkeyup="renderInventory()">
@@ -336,6 +336,14 @@
     <div id="print-area"></div>
 
     <script>
+        // ==========================================
+        // ADMIN SECURITY PIN
+        // Change this number to set your custom password!
+        // ==========================================
+        const ADMIN_PIN = "2026"; 
+        let isAdminUnlocked = false;
+
+
         const firebaseConfig = {
           apiKey: "AIzaSyAdpvuUAGnj2ixxAdjbhntd775V5FEVH9M",
           authDomain: "birhan-steel.firebaseapp.com",
@@ -370,11 +378,30 @@
             document.getElementById('loan-date').value = today; 
         }
         
+        // --- NEW SECURE TAB SWITCHING LOGIC ---
         function switchTab(id) { 
+            const protectedTabs = ['dashboard', 'loans', 'settings'];
+
+            // Check if the user is trying to access a protected tab and hasn't unlocked it yet
+            if (protectedTabs.includes(id) && !isAdminUnlocked) {
+                const enteredPin = prompt("Admin Access Required. Enter PIN:");
+                if (enteredPin === ADMIN_PIN) {
+                    isAdminUnlocked = true; // Unlock for the rest of this session
+                } else {
+                    alert("Incorrect PIN. Access Denied.");
+                    return; // Stop the function here so the tab doesn't change
+                }
+            }
+
             document.querySelectorAll('.section').forEach(el => el.classList.remove('active')); 
             document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active')); 
+            
             document.getElementById(id).classList.add('active'); 
-            event.currentTarget.classList.add('active'); 
+            
+            // Highlight the correct navigation button
+            const activeBtn = document.querySelector(`.nav-btn[onclick="switchTab('${id}')"]`);
+            if(activeBtn) activeBtn.classList.add('active');
+            
             window.scrollTo(0,0);
         }
         
@@ -389,7 +416,6 @@
             document.getElementById('dash-value-store').innerText = formatMoney(valStore);
             document.getElementById('dash-low').innerText = low.length;
             
-            // Render Loans on Dashboard
             document.getElementById('dash-loans-table').innerHTML = (app.loans || []).map(l => `
                 <tr>
                     <td>${l.date}</td>
@@ -475,7 +501,6 @@
             if(item) { item.qty += qty; app.purchases.push({ id: Date.now().toString(), date: document.getElementById('purch-date').value, itemId: id, qty, supplier: document.getElementById('purch-supp').value }); saveToCloud(); alert("Stock Added!"); e.target.reset(); setDates(); }
         });
 
-        // NEW LOAN SUBMIT LISTENER
         document.getElementById('loan-form').addEventListener('submit', e => {
             e.preventDefault();
             const loan = {
@@ -490,7 +515,7 @@
             saveToCloud();
             e.target.reset();
             setDates();
-            switchTab('dashboard'); // Take user to dashboard to see it
+            switchTab('dashboard'); 
             alert("Loan Recorded Successfully!");
         });
 
