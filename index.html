@@ -13,8 +13,8 @@
         :root { 
             --primary: #0f172a; 
             --primary-light: #334155; 
-            --accent: #2563eb; /* Royal Blue */
-            --bg: #f3f4f6; /* Light Gray Background */
+            --accent: #2563eb; 
+            --bg: #f3f4f6; 
             --surface: #ffffff; 
             --text-main: #111827; 
             --text-muted: #6b7280; 
@@ -41,58 +41,30 @@
         .section { display: none; animation: fadeIn 0.3s ease; } .section.active { display: block; } 
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         
-        /* --- NEW DESIGN COMPONENTS --- */
+        /* Components */
         h1 { font-size: 1.5rem; font-weight: 700; color: #111827; margin: 0; }
-        
-        /* White Panel Card */
-        .panel { 
-            background: var(--surface); 
-            padding: 24px; 
-            border-radius: 8px; 
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1); 
-            border: 1px solid #e5e7eb; 
-            margin-bottom: 24px; 
-        }
-
-        /* Form Grid - Matches Screenshot */
+        .panel { background: var(--surface); padding: 24px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border: 1px solid #e5e7eb; margin-bottom: 24px; }
         .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 16px; }
         .form-group label { display: block; margin-bottom: 6px; font-size: 0.875rem; font-weight: 500; color: #374151; }
-        .form-control { 
-            width: 100%; 
-            padding: 10px 12px; 
-            border: 1px solid #d1d5db; 
-            border-radius: 6px; 
-            font-size: 0.95rem; 
-            color: #111827;
-            background: #ffffff;
-            transition: border-color 0.15s;
-        }
+        .form-control { width: 100%; padding: 10px 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 0.95rem; color: #111827; background: #ffffff; transition: border-color 0.15s; }
         .form-control:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1); }
 
         /* Buttons */
-        .btn { padding: 10px 20px; border-radius: 6px; font-weight: 500; font-size: 0.9rem; cursor: pointer; transition: 0.2s; border: none; }
-        .btn-primary { background-color: var(--accent); color: white; }
-        .btn-primary:hover { background-color: #1d4ed8; }
-        .btn-outline { background-color: white; border: 1px solid #d1d5db; color: #374151; }
-        .btn-outline:hover { background-color: #f9fafb; }
-        .btn-danger { background: var(--danger); color: white; }
-        .btn-warning { background: var(--warning); color: white; }
-        .btn-success { background: var(--success); color: white; }
+        .btn { padding: 8px 16px; border-radius: 6px; font-weight: 500; font-size: 0.9rem; cursor: pointer; transition: 0.2s; border: none; }
+        .btn-primary { background-color: var(--accent); color: white; } .btn-primary:hover { background-color: #1d4ed8; }
+        .btn-outline { background-color: white; border: 1px solid #d1d5db; color: #374151; } .btn-outline:hover { background-color: #f9fafb; }
+        .btn-danger { background: var(--danger); color: white; } .btn-danger:hover { background: #dc2626; }
+        .btn-warning { background: var(--warning); color: white; } .btn-warning:hover { background: #d97706; }
+        .btn-success { background: var(--success); color: white; } .btn-success:hover { background: #059669; }
 
-        /* Inventory List Style */
+        /* Inventory List */
         .inv-group { background: white; border: 1px solid #e5e7eb; border-radius: 6px; margin-bottom: 8px; overflow: hidden; }
-        .inv-header { 
-            padding: 14px 18px; 
-            display: flex; align-items: center; justify-content: space-between; 
-            cursor: pointer; background: white; transition: background 0.1s;
-        }
+        .inv-header { padding: 14px 18px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; background: white; transition: background 0.1s; }
         .inv-header:hover { background-color: #f9fafb; }
         .inv-title { display: flex; align-items: center; font-weight: 600; color: #1f2937; }
-        .folder-icon { color: #fbbf24; margin-right: 12px; width: 20px; height: 20px; } /* Yellow Folder */
-        .inv-count { font-size: 0.85rem; color: #6b7280; display: flex; align-items: center; gap: 5px; }
-        
-        .inv-details { display: none; border-top: 1px solid #f3f4f6; }
-        .inv-details.open { display: block; }
+        .folder-icon { color: #fbbf24; margin-right: 12px; width: 20px; height: 20px; }
+        .inv-count { font-size: 0.85rem; color: #6b7280; }
+        .inv-details { display: none; border-top: 1px solid #f3f4f6; } .inv-details.open { display: block; }
         
         table { width: 100%; border-collapse: collapse; } 
         th { background: #f9fafb; padding: 12px 16px; text-align: left; font-size: 0.75rem; color: #6b7280; font-weight: 600; text-transform: uppercase; border-bottom: 1px solid #e5e7eb; } 
@@ -118,15 +90,7 @@
             .report-table th, .report-table td { border: 1px solid #000; padding: 8px; text-align: left; }
             .report-group-row { background-color: #f0f0f0 !important; font-weight: bold; -webkit-print-color-adjust: exact; }
         }
-        @media (max-width: 768px) { 
-            body { flex-direction: column; overflow-y: auto; } 
-            .sidebar { width: 100%; height: auto; } 
-            .sidebar-header { flex-direction: row; padding: 15px; } 
-            .logo-img { width: 50px; height: 50px; } 
-            .nav-items { display: flex; overflow-x: auto; } 
-            .nav-btn { width: auto; white-space: nowrap; } 
-            .form-grid { grid-template-columns: 1fr; gap: 10px; }
-        }
+        @media (max-width: 768px) { body { flex-direction: column; overflow-y: auto; } .sidebar { width: 100%; height: auto; } .sidebar-header { flex-direction: row; padding: 15px; } .logo-img { width: 50px; height: 50px; } .nav-items { display: flex; overflow-x: auto; } .nav-btn { width: auto; white-space: nowrap; } .form-grid { grid-template-columns: 1fr; gap: 10px; } }
     </style>
 </head>
 <body>
@@ -182,18 +146,18 @@
                     <datalist id="list-types"></datalist><datalist id="list-dims"></datalist>
                     
                     <div class="form-grid">
-                        <div class="form-group"><label>Type</label><input type="text" id="item-type" class="form-control" placeholder="Pipe" list="list-types" required></div>
-                        <div class="form-group"><label>Dimensions</label><input type="text" id="item-dim" class="form-control" placeholder="40x40" list="list-dims" required></div>
+                        <div class="form-group"><label>Type</label><input type="text" id="item-type" class="form-control" list="list-types" required></div>
+                        <div class="form-group"><label>Dimensions</label><input type="text" id="item-dim" class="form-control" list="list-dims" required></div>
                     </div>
                     
                     <div class="form-grid">
-                        <div class="form-group"><label>Thickness</label><input type="text" id="item-thick" class="form-control" placeholder="1.5"></div>
-                        <div class="form-group"><label>Length</label><input type="text" id="item-len" class="form-control" placeholder="6m"></div>
+                        <div class="form-group"><label>Thickness</label><input type="text" id="item-thick" class="form-control"></div>
+                        <div class="form-group"><label>Length</label><input type="text" id="item-len" class="form-control"></div>
                     </div>
                     
                     <div class="form-grid">
-                        <div class="form-group"><label>Price (ETB)</label><input type="number" id="item-price" class="form-control" placeholder="1500" required></div>
-                        <div class="form-group"><label>Quantity</label><input type="number" id="item-qty" class="form-control" placeholder="0" required></div>
+                        <div class="form-group"><label>Price (ETB)</label><input type="number" id="item-price" class="form-control" required></div>
+                        <div class="form-group"><label>Quantity</label><input type="number" id="item-qty" class="form-control" required></div>
                     </div>
                     
                     <div class="form-group" style="margin-bottom:24px;">
@@ -217,11 +181,11 @@
                 <form id="sales-form">
                     <div class="form-grid">
                         <div class="form-group"><label>Date</label><input type="date" id="sale-date" class="form-control" required></div>
-                        <div class="form-group"><label>Customer</label><input type="text" id="sale-customer" class="form-control" placeholder="Walk-in"></div>
+                        <div class="form-group"><label>Customer</label><input type="text" id="sale-customer" class="form-control"></div>
                     </div>
                     <div class="form-grid">
                         <div class="form-group"><label>Product</label><select id="sale-item" class="form-control" required></select></div>
-                        <div class="form-group"><label>Qty</label><input type="number" id="sale-qty" class="form-control" placeholder="1" required></div>
+                        <div class="form-group"><label>Qty</label><input type="number" id="sale-qty" class="form-control" required></div>
                     </div>
                     <button type="submit" class="btn btn-success" style="width:100%">Confirm Sale</button>
                 </form>
@@ -238,8 +202,8 @@
                         <div class="form-group"><label>Product</label><select id="purch-item" class="form-control" required></select></div>
                     </div>
                     <div class="form-grid">
-                        <div class="form-group"><label>Qty Added</label><input type="number" id="purch-qty" class="form-control" placeholder="0" required></div>
-                        <div class="form-group"><label>Supplier</label><input type="text" id="purch-supp" class="form-control" placeholder="Supplier Name"></div>
+                        <div class="form-group"><label>Qty Added</label><input type="number" id="purch-qty" class="form-control" required></div>
+                        <div class="form-group"><label>Supplier</label><input type="text" id="purch-supp" class="form-control"></div>
                     </div>
                     <button type="submit" class="btn btn-primary">Add Stock</button>
                 </form>
@@ -283,25 +247,19 @@
         db.collection('birhan_data').doc('main').onSnapshot((doc) => {
             const loader = document.getElementById('loader');
             if(loader) loader.style.display = 'none';
-            
             if (doc.exists) {
                 app = doc.data();
                 if(!app.inventory) app.inventory = [];
                 if(!app.sales) app.sales = [];
                 refresh();
-            } else {
-                saveToCloud();
-            }
+            } else { saveToCloud(); }
         }, (error) => {
-            console.error("Sync Error:", error);
             const loader = document.getElementById('loader');
             loader.innerHTML = `<h2 style="color:red">Connection Error</h2><p>${error.message}</p>`;
         });
 
         function saveToCloud() {
-            db.collection('birhan_data').doc('main').set(app)
-                .then(() => console.log("Saved."))
-                .catch((e) => console.error("Save failed:", e));
+            db.collection('birhan_data').doc('main').set(app).catch((e) => console.error("Save failed:", e));
         }
 
         function setDates() {
@@ -334,7 +292,7 @@
             const groups = {}; filtered.forEach(item => { if(!groups[item.type]) groups[item.type] = []; groups[item.type].push(item); });
             let html = '';
             
-            // Generate List with Yellow Folder Icon
+            // Generate List
             Object.keys(groups).sort().forEach(type => {
                 const items = groups[type].sort((a,b) => (a.dimensions||"").localeCompare(b.dimensions||"", undefined, {numeric:true}));
                 html += `
@@ -355,7 +313,10 @@
                                     <td>${i.location}</td>
                                     <td>${formatMoney(i.price)}</td>
                                     <td style="color:${i.qty<20?'#ef4444':'inherit'}"><b>${i.qty}</b></td>
-                                    <td><button class="btn btn-warning" style="padding:6px 10px; font-size:0.8rem;" onclick="duplicateItem('${i.id}')">Edit</button></td>
+                                    <td>
+                                        <button class="btn btn-warning" style="padding:4px 10px; font-size:0.8rem;" onclick="duplicateItem('${i.id}')">Copy</button>
+                                        <button class="btn btn-danger" style="padding:4px 10px; font-size:0.8rem; margin-left:5px;" onclick="delItem('${i.id}')">Delete</button>
+                                    </td>
                                 </tr>`).join('')}
                             </tbody>
                         </table>
@@ -364,7 +325,6 @@
             });
             document.getElementById('inventory-container').innerHTML = html || '<div style="padding:20px; text-align:center; color:#6b7280;">No items found. Add new product above.</div>';
             
-            // Auto-fill Datalists
             const types = [...new Set(app.inventory.map(i => i.type))].sort(); document.getElementById('list-types').innerHTML = types.map(t=>`<option value="${t}">`).join('');
             const dims = [...new Set(app.inventory.map(i => i.dimensions))].sort(); document.getElementById('list-dims').innerHTML = dims.map(d=>`<option value="${d}">`).join('');
         }
@@ -417,6 +377,14 @@
             document.getElementById('item-type').value = item.type; document.getElementById('item-dim').value = item.dimensions; document.getElementById('item-thick').value = item.thickness; document.getElementById('item-len').value = item.length; document.getElementById('item-price').value = item.price; document.getElementById('item-qty').value = 0; document.getElementById('item-loc').value = item.location;
             document.getElementById('cancel-btn').style.display = 'inline-block'; window.scrollTo({top:0, behavior:'smooth'});
         }
+        
+        function delItem(id) {
+            if(confirm("Are you sure you want to delete this item?")) {
+                app.inventory = app.inventory.filter(i => i.id != id);
+                saveToCloud();
+            }
+        }
+        
         function resetForm() { document.getElementById('add-item-form').reset(); document.getElementById('cancel-btn').style.display = 'none'; }
         
         function refresh() {
@@ -424,7 +392,6 @@
             const opts = `<option value="">-- Select --</option>` + app.inventory.map(i => `<option value="${i.id}">${i.type} ${i.dimensions} - ${i.location} (${i.qty})</option>`).join('');
             document.getElementById('sale-item').innerHTML = opts; document.getElementById('purch-item').innerHTML = opts;
             
-            // Report Table
             let totalVal = 0;
             document.getElementById('report-table-body').innerHTML = app.inventory.map(i => {
                 const val = i.price * i.qty; totalVal += val;
