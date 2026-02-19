@@ -128,13 +128,12 @@
                 border-left-color: transparent; 
                 border-bottom-color: var(--accent); 
             }
-            /* Fixed main content preventing side scrolling on mobile */
-            .main-content { padding: 20px; max-width: 100vw; overflow-x: hidden; }
+            .main-content { padding: 20px; }
             .grid-cards { grid-template-columns: 1fr; gap: 15px; }
             .form-row { grid-template-columns: 1fr; gap: 10px; }
             .flex-between { flex-direction: column; align-items: flex-start; gap: 15px; }
             .flex-between input { width: 100% !important; }
-            
+            .table-container { overflow-x: auto; }
             table { min-width: 600px; }
         }
 
@@ -159,16 +158,8 @@
         .btn-warning { background: var(--warning); color: white; }
         .btn-sm { padding: 6px 12px; font-size: 0.85rem; border-radius: 6px; }
         
-        /* FIXED TABLE CONTAINER FOR MOBILE SWIPING */
-        .table-container { 
-            background: var(--surface); 
-            border-radius: var(--radius); 
-            box-shadow: var(--shadow); 
-            border: 1px solid var(--border); 
-            overflow-x: auto; 
-            max-width: 100%;
-            -webkit-overflow-scrolling: touch; 
-        }
+        /* THIS IS THE CRITICAL CLASS FOR SWIPING TABLES ON MOBILE */
+        .table-container { background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow); border: 1px solid var(--border); overflow-x: auto; -webkit-overflow-scrolling: touch; }
         
         table { width: 100%; border-collapse: collapse; }
         th { background: #f8fafc; color: var(--text-muted); font-weight: 700; text-transform: uppercase; font-size: 0.75rem; padding: 15px 20px; border-bottom: 2px solid var(--border); text-align: left; }
@@ -179,26 +170,18 @@
         .badge { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; background: #e2e8f0; color: #475569; }
         #cloud-loader { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.9); z-index: 100; display: flex; justify-content: center; align-items: center; flex-direction: column; font-weight: bold; color: var(--accent); }
         
-        /* --- FIXED PRINT STYLES FOR PAGINATION --- */
+        /* --- FIXED PRINT STYLES --- */
         #print-area { display: none; }
         @media print {
-            html, body { 
+            body { 
                 display: block !important; 
                 height: auto !important; 
                 overflow: visible !important; 
                 background: white !important; 
                 color: black !important;
-                margin: 0 !important;
-                padding: 0 !important;
             }
             body > *:not(#print-area) { display: none !important; }
-            #print-area { 
-                display: block !important; 
-                position: static !important; /* Forces multi-page printing to work */
-                width: 100%; 
-                height: auto !important;
-                overflow: visible !important;
-            }
+            #print-area { display: block !important; width: 100%; }
             .receipt-box { width: 80mm; margin: 0 auto; font-family: monospace; padding: 10px; border: 1px solid #000; }
             .report-box { width: 100%; font-family: sans-serif; padding: 20px; box-sizing: border-box; }
             .report-header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid #000; padding-bottom: 10px; }
