@@ -95,8 +95,8 @@
 
         h1 { font-size: 1.8rem; font-weight: 700; color: var(--primary); margin-bottom: 25px; letter-spacing: -0.5px; }
 
-        /* --- MOBILE RESPONSIVE ENGINE (TOP MENU) --- */
-        @media (max-width: 800px) {
+        /* --- MOBILE RESPONSIVE ENGINE (TOP MENU FIXED FOR TABLETS & PHONES) --- */
+        @media (max-width: 1024px) {
             body { flex-direction: column; }
             .sidebar { 
                 width: 100%; 
@@ -173,18 +173,26 @@
         .badge { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; background: #e2e8f0; color: #475569; }
         #cloud-loader { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.9); z-index: 100; display: flex; justify-content: center; align-items: center; flex-direction: column; font-weight: bold; color: var(--accent); }
         
-        /* --- FIXED PRINT STYLES --- */
+        /* --- FIXED PRINT STYLES FOR PAGINATION --- */
         #print-area { display: none; }
         @media print {
-            body { 
+            html, body { 
                 display: block !important; 
                 height: auto !important; 
                 overflow: visible !important; 
                 background: white !important; 
                 color: black !important;
+                margin: 0 !important;
+                padding: 0 !important;
             }
             body > *:not(#print-area) { display: none !important; }
-            #print-area { display: block !important; width: 100%; }
+            #print-area { 
+                display: block !important; 
+                position: static !important; /* Forces multi-page printing to work */
+                width: 100%; 
+                height: auto !important;
+                overflow: visible !important;
+            }
             .receipt-box { width: 80mm; margin: 0 auto; font-family: monospace; padding: 10px; border: 1px solid #000; }
             .report-box { width: 100%; font-family: sans-serif; padding: 20px; box-sizing: border-box; }
             .report-header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid #000; padding-bottom: 10px; }
@@ -303,10 +311,17 @@
                 <form id="purchase-form">
                     <div class="form-group"><label>Date</label><input type="date" id="purch-date" class="form-control" required></div>
                     <div class="form-group"><label>Product</label><select id="purch-item" class="form-control" required></select></div>
+                    
                     <div class="form-row">
                         <div class="form-group"><label>Qty Added</label><input type="number" id="purch-qty" class="form-control" required></div>
                         <div class="form-group"><label>Supplier</label><input type="text" id="purch-supp" class="form-control"></div>
                     </div>
+                    
+                    <div class="form-group">
+                        <label>Purchase Price per Unit (ETB) - <span style="color:var(--text-muted); font-size:0.8rem; font-weight:normal;">For Admin Profit Calculation</span></label>
+                        <input type="number" step="0.01" id="purch-price" class="form-control" placeholder="0.00" required>
+                    </div>
+
                     <button type="submit" class="btn btn-primary">Add Stock</button>
                 </form>
             </div>
@@ -359,12 +374,13 @@
             </div>
             <div class="table-container">
                 <table>
-                    <thead><tr><th>Product</th><th>Location</th><th>Unit Price</th><th>Qty</th><th>Total Value</th></tr></thead>
+                    <thead><tr><th>Product</th><th>Location</th><th>Unit Price</th><th>Qty</th><th>Total Value</th><th>Profit Made</th></tr></thead>
                     <tbody id="report-table-body"></tbody>
                     <tfoot>
                         <tr style="background:#f1f5f9; font-weight:bold;">
                             <td colspan="4" style="text-align:right;">GRAND TOTAL ASSET VALUE:</td>
                             <td id="report-total-value" style="color:var(--primary);">ETB 0.00</td>
+                            <td id="report-total-profit" style="color:var(--success);">ETB 0.00</td>
                         </tr>
                     </tfoot>
                 </table>
@@ -526,7 +542,7 @@
             const groups = {}; app.purchases.forEach(p => { if(!groups[p.date]) groups[p.date] = []; groups[p.date].push(p); });
             const dates = Object.keys(groups).sort().reverse();
             document.getElementById('purchase-history-container').innerHTML = dates.map(date => `
-                <div class="panel" style="padding:0; overflow:hidden; margin-bottom:20px;"><div style="background:#f8fafc; padding:15px; display:flex; justify-content:space-between;"><b>📅 ${date}</b><button class="btn btn-outline btn-sm" onclick="printDailyPurchaseReport('${date}')">🖨️ Report</button></div><div class="table-container"><table><thead><tr><th>Supplier</th><th>Item</th><th>Qty Added</th><th></th></tr></thead><tbody>${groups[date].map(p => `<tr><td>${p.supplier||'-'}</td><td>${getItemName(p.itemId)}</td><td>${p.qty}</td><td><button class="btn btn-danger btn-sm" onclick="deletePurchase('${p.id}')">Delete</button></td></tr>`).join('')}</tbody></table></div></div>
+                <div class="panel" style="padding:0; overflow:hidden; margin-bottom:20px;"><div style="background:#f8fafc; padding:15px; display:flex; justify-content:space-between;"><b>📅 ${date}</b><button class="btn btn-outline btn-sm" onclick="printDailyPurchaseReport('${date}')">🖨️ Report</button></div><div class="table-container"><table><thead><tr><th>Supplier</th><th>Item</th><th>Purchase Price</th><th>Qty Added</th><th></th></tr></thead><tbody>${groups[date].map(p => `<tr><td>${p.supplier||'-'}</td><td>${getItemName(p.itemId)}</td><td>${formatMoney(p.purchasePrice || 0)}</td><td>${p.qty}</td><td><button class="btn btn-danger btn-sm" onclick="deletePurchase('${p.id}')">Delete</button></td></tr>`).join('')}</tbody></table></div></div>
             `).join('') || '<div style="padding:20px;">No entries found.</div>';
         }
 
@@ -559,8 +575,22 @@
 
         document.getElementById('purchase-form').addEventListener('submit', e => {
             e.preventDefault(); 
-            const id = document.getElementById('purch-item').value; const qty = parseInt(document.getElementById('purch-qty').value); const item = app.inventory.find(i => i.id == id);
-            if(item) { item.qty += qty; app.purchases.push({ id: Date.now().toString(), date: document.getElementById('purch-date').value, itemId: id, qty, supplier: document.getElementById('purch-supp').value }); saveToCloud(); alert("Stock Added!"); e.target.reset(); setDates(); }
+            const id = document.getElementById('purch-item').value; 
+            const qty = parseInt(document.getElementById('purch-qty').value); 
+            const purchPrice = parseFloat(document.getElementById('purch-price').value); // NEW
+            const item = app.inventory.find(i => i.id == id);
+            if(item) { 
+                item.qty += qty; 
+                app.purchases.push({ 
+                    id: Date.now().toString(), 
+                    date: document.getElementById('purch-date').value, 
+                    itemId: id, 
+                    qty, 
+                    supplier: document.getElementById('purch-supp').value,
+                    purchasePrice: purchPrice // NEW
+                }); 
+                saveToCloud(); alert("Stock Added!"); e.target.reset(); setDates(); 
+            }
         });
 
         document.getElementById('loan-form').addEventListener('submit', e => {
@@ -593,13 +623,37 @@
             const opts = `<option value="">-- Select --</option>` + app.inventory.map(i => `<option value="${i.id}">${i.type} ${i.dimensions} - ${i.location} (${i.qty})</option>`).join('');
             document.getElementById('sale-item').innerHTML = opts; document.getElementById('purch-item').innerHTML = opts;
             
-            // ADMIN REPORT (With Money)
+            // ADMIN REPORT (With Money & Profit)
             let totalVal = 0;
+            let totalProfit = 0;
+            
             document.getElementById('report-table-body').innerHTML = app.inventory.map(i => {
-                const val = i.price * i.qty; totalVal += val;
-                return `<tr><td>${i.type} ${i.dimensions} (${i.thickness})</td><td>${i.location}</td><td>${formatMoney(i.price)}</td><td>${i.qty}</td><td style="font-weight:bold;">${formatMoney(val)}</td></tr>`;
+                const val = i.price * i.qty; 
+                totalVal += val;
+                
+                // CALCULATE PROFIT FOR THIS ITEM BASED ON PAST SALES
+                let itemProfit = 0;
+                // Find highest purchase price for this item
+                const relatedPurchases = app.purchases.filter(p => p.itemId === i.id && p.purchasePrice);
+                let highestCost = 0;
+                if(relatedPurchases.length > 0) {
+                    highestCost = Math.max(...relatedPurchases.map(p => p.purchasePrice));
+                }
+                // Find all sales for this item
+                const relatedSales = app.sales.filter(s => s.itemId === i.id);
+                relatedSales.forEach(sale => {
+                    const sellPrice = sale.priceAtSale || i.price; // fallback to current price if old sale
+                    const cost = highestCost > 0 ? highestCost : (sellPrice * 0.7); // Guess 30% margin if no purchase history exists
+                    itemProfit += (sellPrice - cost) * sale.qty;
+                });
+                
+                totalProfit += itemProfit;
+
+                return `<tr><td>${i.type} ${i.dimensions} (${i.thickness})</td><td>${i.location}</td><td>${formatMoney(i.price)}</td><td>${i.qty}</td><td style="font-weight:bold;">${formatMoney(val)}</td><td style="color:var(--success); font-weight:bold;">${formatMoney(itemProfit)}</td></tr>`;
             }).join('');
+            
             document.getElementById('report-total-value').innerText = formatMoney(totalVal);
+            document.getElementById('report-total-profit').innerText = formatMoney(totalProfit);
 
             // WORKER REPORT (No Money)
             document.getElementById('worker-report-table-body').innerHTML = app.inventory.map(i => {
@@ -647,7 +701,7 @@
         }
         function printDailyPurchaseReport(date) {
             const entries = app.purchases.filter(p => p.date === date);
-            const html = `<div class="report-box"><div class="report-header"><h2>BIRHAN STEEL</h2><h3>Daily Stock Entry Report: ${date}</h3></div><table class="report-table"><thead><tr><th>Supplier</th><th>Item</th><th>Qty Added</th></tr></thead><tbody>${entries.map(p => `<tr><td>${p.supplier||'-'}</td><td>${getItemName(p.itemId)}</td><td>${p.qty}</td></tr>`).join('')}</tbody></table></div>`;
+            const html = `<div class="report-box"><div class="report-header"><h2>BIRHAN STEEL</h2><h3>Daily Stock Entry Report: ${date}</h3></div><table class="report-table"><thead><tr><th>Supplier</th><th>Item</th><th>Purchase Price</th><th>Qty Added</th></tr></thead><tbody>${entries.map(p => `<tr><td>${p.supplier||'-'}</td><td>${getItemName(p.itemId)}</td><td>${formatMoney(p.purchasePrice || 0)}</td><td>${p.qty}</td></tr>`).join('')}</tbody></table></div>`;
             document.getElementById('print-area').innerHTML = html; window.print();
         }
         function printStockReport() {
