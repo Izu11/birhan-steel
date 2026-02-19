@@ -324,12 +324,10 @@
             document.getElementById('cloud-loader').style.display = 'none';
             if (doc.exists) {
                 app = doc.data();
-                // Safety check for empty database
                 if(!app.inventory) app.inventory = [];
                 if(!app.sales) app.sales = [];
                 refresh();
             } else {
-                // If it doesn't exist, create it with your initial data
                 saveToCloud();
             }
         }, (error) => {
@@ -341,7 +339,7 @@
             db.collection('birhan_data').doc('main').set(app);
         }
 
-        // --- 3. UI LOGIC (RESTORED FROM YOUR CODE) ---
+        // --- 3. UI LOGIC ---
         function setDates() { const today = new Date().toISOString().split('T')[0]; document.getElementById('sale-date').value = today; document.getElementById('purch-date').value = today; }
         function switchTab(id) { document.querySelectorAll('.section').forEach(el => el.classList.remove('active')); document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active')); document.getElementById(id).classList.add('active'); event.currentTarget.classList.add('active'); }
         function formatMoney(n) { return 'ETB ' + parseFloat(n).toLocaleString('en-ET', {minimumFractionDigits:2}); }
@@ -385,7 +383,7 @@
             const dates = Object.keys(groups).sort().reverse();
             document.getElementById('sales-history-container').innerHTML = dates.map(date => {
                 const total = groups[date].reduce((sum, s) => sum + s.total, 0);
-                return `<div style="margin-bottom:20px; border:1px solid #e2e8f0; border-radius:8px; background:white; overflow:hidden;"><div style="background:#f8fafc; padding:10px 20px; border-bottom:1px solid #e2e8f0; display:flex; justify-content:space-between;"><b>📅 ${date}</b><div><span style="margin-right:15px; color:var(--success); font-weight:bold;">Total: ${formatMoney(total)}</span><button class="btn btn-outline btn-sm" onclick="printDailyReport('${date}')">🖨️ Report</button></div></div><table><thead><tr><th>Client</th><th>Item</th><th>Qty</th><th>Total</th><th></th></tr></thead><tbody>${groups[date].map(s => `<tr><td>${s.customer||'-'}</td><td>${getItemName(s.itemId)}</td><td>${s.qty}</td><td>${formatMoney(s.total)}</td><td><button class="btn btn-primary btn-sm" onclick="printReceipt('${s.id}')">Reprint</button></td></tr>`).join('')}</tbody></table></div>`;
+                return `<div style="margin-bottom:20px; border:1px solid #e2e8f0; border-radius:8px; background:white; overflow:hidden;"><div style="background:#f8fafc; padding:10px 20px; border-bottom:1px solid #e2e8f0; display:flex; justify-content:space-between;"><b>📅 ${date}</b><div><span style="margin-right:15px; color:var(--success); font-weight:bold;">Total: ${formatMoney(total)}</span><button class="btn btn-outline btn-sm" onclick="printDailyReport('${date}')">🖨️ Report</button></div></div><table><thead><tr><th>Client</th><th>Item</th><th>Qty</th><th>Total</th><th></th></tr></thead><tbody>${groups[date].map(s => `<tr><td>${s.customer||'-'}</td><td>${getItemName(s.itemId)}</td><td>${s.qty}</td><td>${formatMoney(s.total)}</td><td style="display:flex; gap:5px;"><button class="btn btn-primary btn-sm" onclick="printReceipt('${s.id}')">Reprint</button><button class="btn btn-danger btn-sm" onclick="deleteSale('${s.id}')">Delete</button></td></tr>`).join('')}</tbody></table></div>`;
             }).join('') || '<div style="padding:20px;">No sales found.</div>';
         }
 
@@ -436,6 +434,19 @@
         }
 
         function delItem(id) { if(confirm("Delete?")) { app.inventory = app.inventory.filter(i => i.id != id); saveToCloud(); } }
+        
+        function deleteSale(saleId) {
+            if(confirm("Are you sure you want to delete this sale? This will also return the stock to inventory.")) {
+                const sale = app.sales.find(s => s.id === saleId);
+                if(sale) {
+                    const item = app.inventory.find(i => i.id === sale.itemId);
+                    if(item) item.qty += parseInt(sale.qty);
+                    app.sales = app.sales.filter(s => s.id !== saleId);
+                    saveToCloud();
+                }
+            }
+        }
+
         function resetForm() { document.getElementById('add-item-form').reset(); document.getElementById('item-loc').selectedIndex = 0; document.getElementById('cancel-btn').style.display = 'none'; }
         
         function wipeData() { if(confirm("Delete ALL data?")) { app = { inventory: [], sales: [] }; saveToCloud(); } }
