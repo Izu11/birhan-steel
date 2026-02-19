@@ -199,7 +199,7 @@
             <div id="low-stock-section" style="display:none; margin-top:40px;">
                 <h2 style="color: var(--danger);">⚠️ Items Needing Reorder</h2>
                 <div class="table-container" style="border-top: 4px solid var(--danger);">
-                    <table><thead><tr><th>Product</th><th>Dimensions</th><th>Location</th><th>Qty Left</th></tr></thead><tbody id="dash-low-stock-table"></tbody></table>
+                    <table><thead><tr><th>Product</th><th>Dimensions</th><th>Thick</th><th>Location</th><th>Qty Left</th></tr></thead><tbody id="dash-low-stock-table"></tbody></table>
                 </div>
             </div>
         </section>
@@ -355,7 +355,8 @@
             
             if(low.length > 0) {
                 document.getElementById('low-stock-section').style.display = 'block';
-                document.getElementById('dash-low-stock-table').innerHTML = low.map(i => `<tr><td><b>${i.type}</b></td><td>${i.dimensions}</td><td><span class="badge">${i.location}</span></td><td style="color:var(--danger); font-weight:bold;">${i.qty}</td></tr>`).join('');
+                // UPDATED: Added ${i.thickness} column below
+                document.getElementById('dash-low-stock-table').innerHTML = low.map(i => `<tr><td><b>${i.type}</b></td><td>${i.dimensions}</td><td>${i.thickness}</td><td><span class="badge">${i.location}</span></td><td style="color:var(--danger); font-weight:bold;">${i.qty}</td></tr>`).join('');
             } else { document.getElementById('low-stock-section').style.display = 'none'; }
         }
 
