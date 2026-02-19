@@ -116,7 +116,7 @@
                 padding-top: 0; 
                 overflow-x: auto; 
                 border-top: 1px solid #475569;
-                scrollbar-width: none; 
+                scrollbar-width: none; /* Hide scrollbar for clean look */
             }
             .nav-items::-webkit-scrollbar { display: none; }
             .nav-btn { 
@@ -134,11 +134,18 @@
             /* Added padding-bottom: 100px so user can scroll past the bottom-most item */
             .main-content { padding: 20px; padding-bottom: 100px; max-width: 100vw; overflow-x: hidden; min-height: 0; }
             .grid-cards { grid-template-columns: 1fr; gap: 15px; }
-            .form-row { grid-template-columns: 1fr; gap: 10px; }
+            
+            /* PRESERVE PC LAYOUT FOR FORMS ON MOBILE */
+            .form-row { grid-template-columns: 1fr 1fr; gap: 15px; } 
+            .form-control { font-size: 16px; padding: 10px; } /* Prevents iOS auto-zoom */
+            
             .flex-between { flex-direction: column; align-items: flex-start; gap: 15px; }
             .flex-between input { width: 100% !important; }
+            
+            /* ALLOW TABLES TO FIT ON SCREEN PROPERLY */
             .table-container { overflow-x: auto; }
-            table { min-width: 600px; }
+            table { min-width: 600px; } 
+            th, td { padding: 8px; font-size: 0.85rem; }
         }
 
         /* Rest of the provided Styles */
@@ -154,25 +161,34 @@
         .form-group { margin-bottom: 20px; }
         .form-group label { display: block; margin-bottom: 8px; font-weight: 600; font-size: 0.9rem; color: var(--text-main); }
         .form-control { width: 100%; padding: 12px 16px; border: 2px solid var(--border); border-radius: 8px; font-size: 1rem; background: #f8fafc; }
-        .btn { padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-size: 0.95rem; font-weight: 600; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        
+        .btn { padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-size: 0.95rem; font-weight: 600; transition: transform 0.1s; }
+        .btn:active { transform: scale(0.98); }
         .btn-primary { background: var(--accent); color: white; }
         .btn-success { background: var(--success); color: white; }
         .btn-danger { background: var(--danger); color: white; }
-        .btn-outline { background: white; border: 2px solid var(--border); color: var(--text-main); }
         .btn-warning { background: var(--warning); color: white; }
+        .btn-outline { background: white; border: 2px solid var(--border); color: var(--text-main); }
         .btn-sm { padding: 6px 12px; font-size: 0.85rem; border-radius: 6px; }
-        
+
+        /* THIS IS THE CRITICAL CLASS FOR SWIPING TABLES ON MOBILE */
         .table-container { background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow); border: 1px solid var(--border); overflow-x: auto; -webkit-overflow-scrolling: touch; }
         
         table { width: 100%; border-collapse: collapse; }
         th { background: #f8fafc; color: var(--text-muted); font-weight: 700; text-transform: uppercase; font-size: 0.75rem; padding: 15px 20px; border-bottom: 2px solid var(--border); text-align: left; }
         td { padding: 16px 20px; border-bottom: 1px solid var(--border); color: var(--text-main); font-size: 0.95rem; }
+        tr:hover td { background-color: #f8fafc; }
+
         .group-header { background: #f8fafc; padding: 18px 25px; cursor: pointer; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
         .group-details { display: none; background: white; border-bottom: 1px solid var(--border); }
         .group-details.open { display: block; }
+        .flex-between { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
         .badge { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; background: #e2e8f0; color: #475569; }
+
+        /* --- LOADER --- */
         #cloud-loader { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.9); z-index: 100; display: flex; justify-content: center; align-items: center; flex-direction: column; font-weight: bold; color: var(--accent); }
-        
+
         /* --- FIXED PRINT STYLES FOR PAGINATION --- */
         #print-area { display: none; }
         @media print {
@@ -274,11 +290,17 @@
                         <div class="form-group"><label>Thickness</label><input type="text" id="item-thick" class="form-control" placeholder="-"></div>
                         <div class="form-group"><label>Length</label><input type="text" id="item-len" class="form-control" placeholder="-"></div>
                     </div>
+                    
                     <div class="form-row">
-                        <div class="form-group"><label>Price (ETB)</label><input type="number" id="item-price" step="0.01" class="form-control" required></div>
+                        <div class="form-group"><label>Purchase Price (ETB)</label><input type="number" id="item-purch-price" step="0.01" class="form-control" required placeholder="Cost from supplier"></div>
+                        <div class="form-group"><label>Selling Price (ETB)</label><input type="number" id="item-price" step="0.01" class="form-control" required placeholder="Price for customer"></div>
+                    </div>
+                    
+                    <div class="form-row">
                         <div class="form-group"><label>Quantity</label><input type="number" id="item-qty" class="form-control" required></div>
                         <div class="form-group"><label>Location</label><select id="item-loc" class="form-control" required><option value="Store">Store</option><option value="Cambridge">Cambridge</option></select></div>
                     </div>
+                    
                     <button type="submit" class="btn btn-primary">Add / Update Item</button>
                     <button type="button" class="btn btn-outline" id="cancel-btn" style="display:none; margin-left:10px;" onclick="resetForm()">Cancel</button>
                 </form>
@@ -311,17 +333,10 @@
                 <form id="purchase-form">
                     <div class="form-group"><label>Date</label><input type="date" id="purch-date" class="form-control" required></div>
                     <div class="form-group"><label>Product</label><select id="purch-item" class="form-control" required></select></div>
-                    
                     <div class="form-row">
                         <div class="form-group"><label>Qty Added</label><input type="number" id="purch-qty" class="form-control" required></div>
                         <div class="form-group"><label>Supplier</label><input type="text" id="purch-supp" class="form-control"></div>
                     </div>
-                    
-                    <div class="form-group">
-                        <label>Purchase Price per Unit (ETB) - <span style="color:var(--text-muted); font-size:0.8rem; font-weight:normal;">For Admin Profit Calculation</span></label>
-                        <input type="number" step="0.01" id="purch-price" class="form-control" placeholder="0.00" required>
-                    </div>
-
                     <button type="submit" class="btn btn-primary">Add Stock</button>
                 </form>
             </div>
@@ -374,7 +389,7 @@
             </div>
             <div class="table-container">
                 <table>
-                    <thead><tr><th>Product</th><th>Location</th><th>Unit Price</th><th>Qty</th><th>Total Value</th><th>Profit Made</th></tr></thead>
+                    <thead><tr><th>Product</th><th>Location</th><th>Unit Price</th><th>Qty</th><th>Total Value</th><th>Expected Profit</th></tr></thead>
                     <tbody id="report-table-body"></tbody>
                     <tfoot>
                         <tr style="background:#f1f5f9; font-weight:bold;">
@@ -542,14 +557,21 @@
             const groups = {}; app.purchases.forEach(p => { if(!groups[p.date]) groups[p.date] = []; groups[p.date].push(p); });
             const dates = Object.keys(groups).sort().reverse();
             document.getElementById('purchase-history-container').innerHTML = dates.map(date => `
-                <div class="panel" style="padding:0; overflow:hidden; margin-bottom:20px;"><div style="background:#f8fafc; padding:15px; display:flex; justify-content:space-between;"><b>📅 ${date}</b><button class="btn btn-outline btn-sm" onclick="printDailyPurchaseReport('${date}')">🖨️ Report</button></div><div class="table-container"><table><thead><tr><th>Supplier</th><th>Item</th><th>Purchase Price</th><th>Qty Added</th><th></th></tr></thead><tbody>${groups[date].map(p => `<tr><td>${p.supplier||'-'}</td><td>${getItemName(p.itemId)}</td><td>${formatMoney(p.purchasePrice || 0)}</td><td>${p.qty}</td><td><button class="btn btn-danger btn-sm" onclick="deletePurchase('${p.id}')">Delete</button></td></tr>`).join('')}</tbody></table></div></div>
+                <div class="panel" style="padding:0; overflow:hidden; margin-bottom:20px;"><div style="background:#f8fafc; padding:15px; display:flex; justify-content:space-between;"><b>📅 ${date}</b><button class="btn btn-outline btn-sm" onclick="printDailyPurchaseReport('${date}')">🖨️ Report</button></div><div class="table-container"><table><thead><tr><th>Supplier</th><th>Item</th><th>Qty Added</th><th></th></tr></thead><tbody>${groups[date].map(p => `<tr><td>${p.supplier||'-'}</td><td>${getItemName(p.itemId)}</td><td>${p.qty}</td><td><button class="btn btn-danger btn-sm" onclick="deletePurchase('${p.id}')">Delete</button></td></tr>`).join('')}</tbody></table></div></div>
             `).join('') || '<div style="padding:20px;">No entries found.</div>';
         }
 
         function duplicateItem(id) {
             const item = app.inventory.find(i => i.id == id);
             if(!item) return;
-            document.getElementById('item-type').value = item.type; document.getElementById('item-dim').value = item.dimensions; document.getElementById('item-thick').value = item.thickness; document.getElementById('item-len').value = item.length; document.getElementById('item-price').value = item.price; document.getElementById('item-qty').value = 0; document.getElementById('item-loc').value = item.location;
+            document.getElementById('item-type').value = item.type; 
+            document.getElementById('item-dim').value = item.dimensions; 
+            document.getElementById('item-thick').value = item.thickness; 
+            document.getElementById('item-len').value = item.length; 
+            document.getElementById('item-purch-price').value = item.purchPrice || 0; // NEW
+            document.getElementById('item-price').value = item.price; 
+            document.getElementById('item-qty').value = 0; 
+            document.getElementById('item-loc').value = item.location;
             document.getElementById('cancel-btn').style.display = 'inline-block'; window.scrollTo({top:0, behavior:'smooth'});
         }
 
@@ -560,10 +582,18 @@
             const thick = document.getElementById('item-thick').value.trim() || '-';
             const len = document.getElementById('item-len').value.trim() || '-';
             const loc = document.getElementById('item-loc').value; 
+            const purchPrice = parseFloat(document.getElementById('item-purch-price').value); // NEW
             const price = parseFloat(document.getElementById('item-price').value);
             const qty = parseInt(document.getElementById('item-qty').value);
+            
             const exist = app.inventory.find(i => (i.type||"").toLowerCase()===type.toLowerCase() && (i.dimensions||"").toLowerCase()===dim.toLowerCase() && (i.thickness||"").toLowerCase()===thick.toLowerCase() && (i.length||"").toLowerCase()===len.toLowerCase() && (i.location||"").toLowerCase()===loc.toLowerCase());
-            if(exist) { exist.qty += qty; exist.price = price; } else { app.inventory.push({ id: Date.now().toString(), type, dimensions: dim, thickness: thick, length: len, price, qty, location: loc }); }
+            if(exist) { 
+                exist.qty += qty; 
+                exist.price = price; 
+                exist.purchPrice = purchPrice; // Update purchase price
+            } else { 
+                app.inventory.push({ id: Date.now().toString(), type, dimensions: dim, thickness: thick, length: len, purchPrice, price, qty, location: loc }); 
+            }
             saveToCloud(); resetForm();
         });
 
@@ -575,22 +605,8 @@
 
         document.getElementById('purchase-form').addEventListener('submit', e => {
             e.preventDefault(); 
-            const id = document.getElementById('purch-item').value; 
-            const qty = parseInt(document.getElementById('purch-qty').value); 
-            const purchPrice = parseFloat(document.getElementById('purch-price').value); // NEW
-            const item = app.inventory.find(i => i.id == id);
-            if(item) { 
-                item.qty += qty; 
-                app.purchases.push({ 
-                    id: Date.now().toString(), 
-                    date: document.getElementById('purch-date').value, 
-                    itemId: id, 
-                    qty, 
-                    supplier: document.getElementById('purch-supp').value,
-                    purchasePrice: purchPrice // NEW
-                }); 
-                saveToCloud(); alert("Stock Added!"); e.target.reset(); setDates(); 
-            }
+            const id = document.getElementById('purch-item').value; const qty = parseInt(document.getElementById('purch-qty').value); const item = app.inventory.find(i => i.id == id);
+            if(item) { item.qty += qty; app.purchases.push({ id: Date.now().toString(), date: document.getElementById('purch-date').value, itemId: id, qty, supplier: document.getElementById('purch-supp').value }); saveToCloud(); alert("Stock Added!"); e.target.reset(); setDates(); }
         });
 
         document.getElementById('loan-form').addEventListener('submit', e => {
@@ -623,33 +639,17 @@
             const opts = `<option value="">-- Select --</option>` + app.inventory.map(i => `<option value="${i.id}">${i.type} ${i.dimensions} - ${i.location} (${i.qty})</option>`).join('');
             document.getElementById('sale-item').innerHTML = opts; document.getElementById('purch-item').innerHTML = opts;
             
-            // ADMIN REPORT (With Money & Profit)
+            // ADMIN REPORT (With Money & Expected Profit)
             let totalVal = 0;
             let totalProfit = 0;
             
             document.getElementById('report-table-body').innerHTML = app.inventory.map(i => {
                 const val = i.price * i.qty; 
+                const profit = (i.price - (i.purchPrice || 0)) * i.qty; // Calculate Expected Profit
                 totalVal += val;
+                totalProfit += profit;
                 
-                // CALCULATE PROFIT FOR THIS ITEM BASED ON PAST SALES
-                let itemProfit = 0;
-                // Find highest purchase price for this item
-                const relatedPurchases = app.purchases.filter(p => p.itemId === i.id && p.purchasePrice);
-                let highestCost = 0;
-                if(relatedPurchases.length > 0) {
-                    highestCost = Math.max(...relatedPurchases.map(p => p.purchasePrice));
-                }
-                // Find all sales for this item
-                const relatedSales = app.sales.filter(s => s.itemId === i.id);
-                relatedSales.forEach(sale => {
-                    const sellPrice = sale.priceAtSale || i.price; // fallback to current price if old sale
-                    const cost = highestCost > 0 ? highestCost : (sellPrice * 0.7); // Guess 30% margin if no purchase history exists
-                    itemProfit += (sellPrice - cost) * sale.qty;
-                });
-                
-                totalProfit += itemProfit;
-
-                return `<tr><td>${i.type} ${i.dimensions} (${i.thickness})</td><td>${i.location}</td><td>${formatMoney(i.price)}</td><td>${i.qty}</td><td style="font-weight:bold;">${formatMoney(val)}</td><td style="color:var(--success); font-weight:bold;">${formatMoney(itemProfit)}</td></tr>`;
+                return `<tr><td>${i.type} ${i.dimensions} (${i.thickness})</td><td>${i.location}</td><td>${formatMoney(i.price)}</td><td>${i.qty}</td><td style="font-weight:bold;">${formatMoney(val)}</td><td style="color:var(--success); font-weight:bold;">${formatMoney(profit)}</td></tr>`;
             }).join('');
             
             document.getElementById('report-total-value').innerText = formatMoney(totalVal);
@@ -701,21 +701,27 @@
         }
         function printDailyPurchaseReport(date) {
             const entries = app.purchases.filter(p => p.date === date);
-            const html = `<div class="report-box"><div class="report-header"><h2>BIRHAN STEEL</h2><h3>Daily Stock Entry Report: ${date}</h3></div><table class="report-table"><thead><tr><th>Supplier</th><th>Item</th><th>Purchase Price</th><th>Qty Added</th></tr></thead><tbody>${entries.map(p => `<tr><td>${p.supplier||'-'}</td><td>${getItemName(p.itemId)}</td><td>${formatMoney(p.purchasePrice || 0)}</td><td>${p.qty}</td></tr>`).join('')}</tbody></table></div>`;
+            const html = `<div class="report-box"><div class="report-header"><h2>BIRHAN STEEL</h2><h3>Daily Stock Entry Report: ${date}</h3></div><table class="report-table"><thead><tr><th>Supplier</th><th>Item</th><th>Qty Added</th></tr></thead><tbody>${entries.map(p => `<tr><td>${p.supplier||'-'}</td><td>${getItemName(p.itemId)}</td><td>${p.qty}</td></tr>`).join('')}</tbody></table></div>`;
             document.getElementById('print-area').innerHTML = html; window.print();
         }
+        
         function printStockReport() {
             const date = new Date().toLocaleDateString();
             let totalVal = 0;
+            let totalProfit = 0; // NEW
+            
             const types = [...new Set(app.inventory.map(i => i.type))].sort();
             let rows = types.map(t => {
                 const items = app.inventory.filter(i => i.type === t);
-                return `<tr class="report-group-row"><td colspan="5">📂 ${t}</td></tr>` + items.map(i => {
-                    const val = i.price * i.qty; totalVal += val;
-                    return `<tr><td>${i.dimensions} (${i.thickness})</td><td>${i.location}</td><td>${formatMoney(i.price)}</td><td>${i.qty}</td><td style="text-align:right;">${formatMoney(val)}</td></tr>`;
+                return `<tr class="report-group-row"><td colspan="6">📂 ${t}</td></tr>` + items.map(i => {
+                    const val = i.price * i.qty; 
+                    const profit = (i.price - (i.purchPrice || 0)) * i.qty; // NEW
+                    totalVal += val;
+                    totalProfit += profit; // NEW
+                    return `<tr><td>${i.dimensions} (${i.thickness})</td><td>${i.location}</td><td>${formatMoney(i.price)}</td><td>${i.qty}</td><td style="text-align:right;">${formatMoney(val)}</td><td style="text-align:right; color:green;">${formatMoney(profit)}</td></tr>`;
                 }).join('');
             }).join('');
-            document.getElementById('print-area').innerHTML = `<div class="report-box"><div class="report-header"><h2>BIRHAN STEEL</h2><h3>Current Stock Report</h3><p>Generated: ${date}</p></div><table class="report-table"><thead><tr><th>Product</th><th>Location</th><th>Unit Price</th><th>Qty</th><th>Total Value</th></tr></thead><tbody>${rows}</tbody><tfoot><tr><td colspan="4" style="text-align:right; font-weight:bold;">GRAND TOTAL:</td><td style="text-align:right; font-weight:bold;">${formatMoney(totalVal)}</td></tr></tfoot></table></div>`;
+            document.getElementById('print-area').innerHTML = `<div class="report-box"><div class="report-header"><h2>BIRHAN STEEL</h2><h3>Current Stock Report</h3><p>Generated: ${date}</p></div><table class="report-table"><thead><tr><th>Product</th><th>Location</th><th>Unit Price</th><th>Qty</th><th>Total Value</th><th>Expected Profit</th></tr></thead><tbody>${rows}</tbody><tfoot><tr><td colspan="4" style="text-align:right; font-weight:bold;">GRAND TOTAL:</td><td style="text-align:right; font-weight:bold;">${formatMoney(totalVal)}</td><td style="text-align:right; font-weight:bold; color:green;">${formatMoney(totalProfit)}</td></tr></tfoot></table></div>`;
             window.print();
         }
 
