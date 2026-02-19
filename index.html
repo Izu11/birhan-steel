@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>BIRHAN STEEL | Inventory Manager</title>
     
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
@@ -19,11 +19,9 @@
             --text-main: #1e293b;     /* Dark Slate */
             --text-muted: #64748b;    /* Muted Gray */
             --border: #e2e8f0;        /* Light Border */
-            
             --success: #10b981;       /* Green */
             --danger: #ef4444;        /* Red */
             --warning: #f59e0b;       /* Orange/Yellow */
-            
             --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
             --radius: 12px;
         }
@@ -64,7 +62,6 @@
         }
         
         .sidebar-header h2 { font-size: 1.2rem; font-weight: 700; letter-spacing: 1px; color: white; margin: 0; }
-
         .nav-items { flex: 1; padding-top: 20px; overflow-y: auto; }
         
         .nav-btn { 
@@ -136,6 +133,33 @@
         .flex-between { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
         .badge { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; background: #e2e8f0; color: #475569; }
 
+        /* --- MOBILE RESPONSIVE ENGINE --- */
+        @media (max-width: 800px) {
+            body { flex-direction: column; }
+            .sidebar { 
+                width: 100%; height: 70px; position: fixed; bottom: 0; left: 0; 
+                flex-direction: row; border-top: 1px solid #334155; border-right: none; 
+            }
+            .sidebar-header { display: none; }
+            .nav-items { display: flex; padding: 0; width: 100%; justify-content: space-around; overflow: hidden; }
+            .nav-btn { 
+                flex-direction: column; padding: 10px 0; text-align: center; font-size: 0.65rem; 
+                border-left: none; border-top: 3px solid transparent; justify-content: center;
+            }
+            .nav-btn:hover { padding-left: 0; }
+            .nav-btn.active { border-top-color: var(--accent); border-left: none; background: rgba(37, 99, 235, 0.1); }
+            
+            .main-content { padding: 20px; padding-bottom: 90px; } /* Space for bottom nav */
+            .grid-cards { grid-template-columns: 1fr; }
+            .form-row { grid-template-columns: 1fr; gap: 10px; }
+            .flex-between { flex-direction: column; align-items: flex-start; gap: 15px; }
+            .flex-between input { width: 100% !important; }
+            .panel { padding: 15px; }
+            .table-container { overflow-x: auto; } /* Horizontal scroll for small screens */
+            table { min-width: 600px; } 
+            h1 { font-size: 1.4rem; }
+        }
+
         /* --- LOADER --- */
         #cloud-loader { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.9); z-index: 100; display: flex; justify-content: center; align-items: center; flex-direction: column; font-weight: bold; color: var(--accent); }
 
@@ -152,17 +176,6 @@
             .report-table th, .report-table td { border: 1px solid #000; padding: 8px; text-align: left; }
             .report-group-row { background-color: #f0f0f0 !important; font-weight: bold; -webkit-print-color-adjust: exact; }
         }
-
-        @media (max-width: 768px) {
-            body { flex-direction: column; overflow-y: auto; }
-            .sidebar { width: 100%; height: auto; padding: 0; }
-            .sidebar-header { flex-direction: row; text-align: left; padding: 15px; }
-            .logo-img { width: 50px; height: 50px; margin: 0 15px 0 0; }
-            .nav-items { display: flex; overflow-x: auto; padding: 0; border-top: 1px solid #334155; }
-            .nav-btn { width: auto; padding: 15px; white-space: nowrap; border: none; }
-            .main-content { padding: 20px; }
-            .form-row { grid-template-columns: 1fr; }
-        }
     </style>
 </head>
 <body>
@@ -175,17 +188,16 @@
             <h2>BIRHAN STEEL</h2>
         </div>
         <div class="nav-items">
-            <button class="nav-btn active" onclick="switchTab('dashboard')">📊 Dashboard</button>
-            <button class="nav-btn" onclick="switchTab('inventory')">📦 Inventory Groups</button>
-            <button class="nav-btn" onclick="switchTab('sales')">💰 Sales & Receipts</button>
-            <button class="nav-btn" onclick="switchTab('purchases')">📥 Stock Entry</button>
-            <button class="nav-btn" onclick="switchTab('reports')">📋 Current Stock</button>
-            <button class="nav-btn" onclick="switchTab('settings')">🛠️ Settings</button>
+            <button class="nav-btn active" onclick="switchTab('dashboard')">🏠 Dash</button>
+            <button class="nav-btn" onclick="switchTab('inventory')">📦 Stock</button>
+            <button class="nav-btn" onclick="switchTab('sales')">💰 Sales</button>
+            <button class="nav-btn" onclick="switchTab('purchases')">📥 Entry</button>
+            <button class="nav-btn" onclick="switchTab('reports')">📋 Report</button>
+            <button class="nav-btn" onclick="switchTab('settings')">🛠️ Set</button>
         </div>
     </aside>
 
     <main class="main-content">
-
         <section id="dashboard" class="section active">
             <h1>Overview</h1>
             <div class="grid-cards">
@@ -297,13 +309,11 @@
                 <button class="btn btn-danger" onclick="wipeData()">🗑️ Reset All Data</button>
             </div>
         </section>
-
     </main>
 
     <div id="print-area"></div>
 
     <script>
-        // --- 1. FIREBASE CONFIG ---
         const firebaseConfig = {
           apiKey: "AIzaSyAdpvuUAGnj2ixxAdjbhntd775V5FEVH9M",
           authDomain: "birhan-steel.firebaseapp.com",
@@ -312,16 +322,11 @@
           messagingSenderId: "446485440628",
           appId: "1:446485440628:web:f93bc5791d45ae64944921"
         };
-
-        // Initialize Firebase
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
-
-        // App Data State
         let app = { inventory: [], sales: [], purchases: [] };
         const LOW_STOCK_THRESHOLD = 20;
 
-        // --- 2. LIVE DATA SYNC ---
         db.collection('birhan_data').doc('main').onSnapshot((doc) => {
             document.getElementById('cloud-loader').style.display = 'none';
             if (doc.exists) {
@@ -330,21 +335,19 @@
                 if(!app.sales) app.sales = [];
                 if(!app.purchases) app.purchases = [];
                 refresh();
-            } else {
-                saveToCloud();
-            }
-        }, (error) => {
-            alert("Connection error. Check your Firebase Rules.");
-            console.error(error);
-        });
+            } else { saveToCloud(); }
+        }, (error) => { alert("Connection error. Check Firebase."); });
 
-        function saveToCloud() {
-            db.collection('birhan_data').doc('main').set(app);
-        }
+        function saveToCloud() { db.collection('birhan_data').doc('main').set(app); }
 
-        // --- 3. UI LOGIC ---
         function setDates() { const today = new Date().toISOString().split('T')[0]; document.getElementById('sale-date').value = today; document.getElementById('purch-date').value = today; }
-        function switchTab(id) { document.querySelectorAll('.section').forEach(el => el.classList.remove('active')); document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active')); document.getElementById(id).classList.add('active'); event.currentTarget.classList.add('active'); }
+        function switchTab(id) { 
+            document.querySelectorAll('.section').forEach(el => el.classList.remove('active')); 
+            document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active')); 
+            document.getElementById(id).classList.add('active'); 
+            event.currentTarget.classList.add('active'); 
+            window.scrollTo(0,0);
+        }
         function formatMoney(n) { return 'ETB ' + parseFloat(n).toLocaleString('en-ET', {minimumFractionDigits:2}); }
         function getItemName(id) { const i = app.inventory.find(x => x.id == id); return i ? `${i.type} ${i.dimensions} (${i.thickness})` : 'Unknown'; }
 
@@ -355,7 +358,6 @@
             document.getElementById('dash-value-cambridge').innerText = formatMoney(valCam);
             document.getElementById('dash-value-store').innerText = formatMoney(valStore);
             document.getElementById('dash-low').innerText = low.length;
-            
             if(low.length > 0) {
                 document.getElementById('low-stock-section').style.display = 'block';
                 document.getElementById('dash-low-stock-table').innerHTML = low.map(i => `<tr><td><b>${i.type}</b></td><td>${i.dimensions}</td><td>${i.thickness}</td><td><span class="badge">${i.location}</span></td><td style="color:var(--danger); font-weight:bold;">${i.qty}</td></tr>`).join('');
@@ -371,10 +373,9 @@
             let html = '';
             Object.keys(groups).sort().forEach(type => {
                 const items = groups[type].sort((a,b) => (a.dimensions||"").localeCompare(b.dimensions||"", undefined, {numeric:true}));
-                html += `<div class="group-header" onclick="this.nextElementSibling.classList.toggle('open')"><div><span style="font-weight:bold; color:var(--primary);">📂 ${type}</span></div><div style="font-size:0.9rem;">${items.length} Items ▼</div></div><div class="group-details"><table><thead><tr><th>Dim</th><th>Thick/Len</th><th>Loc</th><th>Price</th><th>Qty</th><th>Actions</th></tr></thead><tbody>${items.map(i => `<tr><td><b>${i.dimensions}</b></td><td>${i.thickness} / ${i.length}</td><td><span class="badge">${i.location}</span></td><td>${formatMoney(i.price)}</td><td style="color:${i.qty<LOW_STOCK_THRESHOLD?'var(--danger)':'inherit'}; font-weight:bold;">${i.qty}</td><td><button class="btn btn-warning btn-sm" onclick="duplicateItem('${i.id}')">Edit</button> <button class="btn btn-danger btn-sm" onclick="delItem('${i.id}')">Del</button></td></tr>`).join('')}</tbody></table></div>`;
+                html += `<div class="group-header" onclick="this.nextElementSibling.classList.toggle('open')"><div><span style="font-weight:bold; color:var(--primary);">📂 ${type}</span></div><div style="font-size:0.9rem;">${items.length} Items ▼</div></div><div class="group-details"><div class="table-container"><table><thead><tr><th>Dim</th><th>Thick/Len</th><th>Loc</th><th>Price</th><th>Qty</th><th>Actions</th></tr></thead><tbody>${items.map(i => `<tr><td><b>${i.dimensions}</b></td><td>${i.thickness} / ${i.length}</td><td><span class="badge">${i.location}</span></td><td>${formatMoney(i.price)}</td><td style="color:${i.qty<LOW_STOCK_THRESHOLD?'var(--danger)':'inherit'}; font-weight:bold;">${i.qty}</td><td><button class="btn btn-warning btn-sm" onclick="duplicateItem('${i.id}')">Edit</button> <button class="btn btn-danger btn-sm" onclick="delItem('${i.id}')">Del</button></td></tr>`).join('')}</tbody></table></div></div>`;
             });
             document.getElementById('inventory-container').innerHTML = html || '<div style="padding:20px;">No items.</div>';
-            
             const types = [...new Set(app.inventory.map(i => i.type))].sort(); document.getElementById('list-types').innerHTML = types.map(t=>`<option value="${t}">`).join('');
             const dims = [...new Set(app.inventory.map(i => i.dimensions))].sort(); document.getElementById('list-dims').innerHTML = dims.map(d=>`<option value="${d}">`).join('');
         }
@@ -386,25 +387,15 @@
             const dates = Object.keys(groups).sort().reverse();
             document.getElementById('sales-history-container').innerHTML = dates.map(date => {
                 const total = groups[date].reduce((sum, s) => sum + s.total, 0);
-                return `<div style="margin-bottom:20px; border:1px solid #e2e8f0; border-radius:8px; background:white; overflow:hidden;"><div style="background:#f8fafc; padding:10px 20px; border-bottom:1px solid #e2e8f0; display:flex; justify-content:space-between;"><b>📅 ${date}</b><div><span style="margin-right:15px; color:var(--success); font-weight:bold;">Total: ${formatMoney(total)}</span><button class="btn btn-outline btn-sm" onclick="printDailyReport('${date}')">🖨️ Report</button></div></div><table><thead><tr><th>Client</th><th>Item</th><th>Qty</th><th>Total</th><th></th></tr></thead><tbody>${groups[date].map(s => `<tr><td>${s.customer||'-'}</td><td>${getItemName(s.itemId)}</td><td>${s.qty}</td><td>${formatMoney(s.total)}</td><td style="display:flex; gap:5px;"><button class="btn btn-primary btn-sm" onclick="printReceipt('${s.id}')">Reprint</button><button class="btn btn-danger btn-sm" onclick="deleteSale('${s.id}')">Delete</button></td></tr>`).join('')}</tbody></table></div>`;
+                return `<div style="margin-bottom:20px; border:1px solid #e2e8f0; border-radius:8px; background:white; overflow:hidden;"><div style="background:#f8fafc; padding:10px 20px; border-bottom:1px solid #e2e8f0; display:flex; justify-content:space-between;"><b>📅 ${date}</b><div><span style="margin-right:15px; color:var(--success); font-weight:bold;">Total: ${formatMoney(total)}</span><button class="btn btn-outline btn-sm" onclick="printDailyReport('${date}')">🖨️ Report</button></div></div><div class="table-container"><table><thead><tr><th>Client</th><th>Item</th><th>Qty</th><th>Total</th><th></th></tr></thead><tbody>${groups[date].map(s => `<tr><td>${s.customer||'-'}</td><td>${getItemName(s.itemId)}</td><td>${s.qty}</td><td>${formatMoney(s.total)}</td><td style="display:flex; gap:5px;"><button class="btn btn-primary btn-sm" onclick="printReceipt('${s.id}')">Print</button><button class="btn btn-danger btn-sm" onclick="deleteSale('${s.id}')">Delete</button></td></tr>`).join('')}</tbody></table></div></div>`;
             }).join('') || '<div style="padding:20px;">No sales found.</div>';
         }
 
         function renderPurchaseHistory() {
-            const groups = {}; 
-            app.purchases.forEach(p => { if(!groups[p.date]) groups[p.date] = []; groups[p.date].push(p); });
+            const groups = {}; app.purchases.forEach(p => { if(!groups[p.date]) groups[p.date] = []; groups[p.date].push(p); });
             const dates = Object.keys(groups).sort().reverse();
             document.getElementById('purchase-history-container').innerHTML = dates.map(date => {
-                return `<div style="margin-bottom:20px; border:1px solid #e2e8f0; border-radius:8px; background:white; overflow:hidden;">
-                    <div style="background:#f8fafc; padding:10px 20px; border-bottom:1px solid #e2e8f0; display:flex; justify-content:space-between;">
-                        <b>📅 ${date}</b>
-                        <button class="btn btn-outline btn-sm" onclick="printDailyPurchaseReport('${date}')">🖨️ Report</button>
-                    </div>
-                    <table>
-                        <thead><tr><th>Supplier</th><th>Item</th><th>Qty Added</th><th></th></tr></thead>
-                        <tbody>${groups[date].map(p => `<tr><td>${p.supplier||'-'}</td><td>${getItemName(p.itemId)}</td><td>${p.qty}</td><td><button class="btn btn-danger btn-sm" onclick="deletePurchase('${p.id}')">Delete</button></td></tr>`).join('')}</tbody>
-                    </table>
-                </div>`;
+                return `<div style="margin-bottom:20px; border:1px solid #e2e8f0; border-radius:8px; background:white; overflow:hidden;"><div style="background:#f8fafc; padding:10px 20px; border-bottom:1px solid #e2e8f0; display:flex; justify-content:space-between;"><b>📅 ${date}</b><button class="btn btn-outline btn-sm" onclick="printDailyPurchaseReport('${date}')">🖨️ Report</button></div><div class="table-container"><table><thead><tr><th>Supplier</th><th>Item</th><th>Qty Added</th><th></th></tr></thead><tbody>${groups[date].map(p => `<tr><td>${p.supplier||'-'}</td><td>${getItemName(p.itemId)}</td><td>${p.qty}</td><td><button class="btn btn-danger btn-sm" onclick="deletePurchase('${p.id}')">Delete</button></td></tr>`).join('')}</tbody></table></div></div>`;
             }).join('') || '<div style="padding:20px;">No entries found.</div>';
         }
 
@@ -425,8 +416,7 @@
             const price = parseFloat(document.getElementById('item-price').value);
             const qty = parseInt(document.getElementById('item-qty').value);
             const exist = app.inventory.find(i => (i.type||"").toLowerCase()===type.toLowerCase() && (i.dimensions||"").toLowerCase()===dim.toLowerCase() && (i.thickness||"").toLowerCase()===thick.toLowerCase() && (i.length||"").toLowerCase()===len.toLowerCase() && (i.location||"").toLowerCase()===loc.toLowerCase());
-            if(exist) { exist.qty += qty; exist.price = price; } 
-            else { app.inventory.push({ id: Date.now().toString(), type, dimensions: dim, thickness: thick, length: len, price, qty, location: loc }); }
+            if(exist) { exist.qty += qty; exist.price = price; } else { app.inventory.push({ id: Date.now().toString(), type, dimensions: dim, thickness: thick, length: len, price, qty, location: loc }); }
             saveToCloud(); resetForm();
         });
 
@@ -444,9 +434,7 @@
             if(item) { 
                 item.qty += qty; 
                 app.purchases.push({ id: Date.now().toString(), date: document.getElementById('purch-date').value, itemId: id, qty, supplier: document.getElementById('purch-supp').value });
-                saveToCloud(); 
-                alert("Stock Added!"); 
-                e.target.reset(); setDates(); 
+                saveToCloud(); alert("Stock Added!"); e.target.reset(); setDates(); 
             }
         });
 
@@ -454,7 +442,6 @@
             renderDashboard(); renderInventory(); renderSalesHistory(); renderPurchaseHistory();
             const opts = `<option value="">-- Select --</option>` + app.inventory.map(i => `<option value="${i.id}">${i.type} ${i.dimensions} - ${i.location} (${i.qty})</option>`).join('');
             document.getElementById('sale-item').innerHTML = opts; document.getElementById('purch-item').innerHTML = opts;
-            
             let totalVal = 0;
             document.getElementById('report-table-body').innerHTML = app.inventory.map(i => {
                 const val = i.price * i.qty; totalVal += val;
@@ -464,9 +451,8 @@
         }
 
         function delItem(id) { if(confirm("Delete?")) { app.inventory = app.inventory.filter(i => i.id != id); saveToCloud(); } }
-        
         function deleteSale(saleId) {
-            if(confirm("Are you sure you want to delete this sale? This will also return the stock to inventory.")) {
+            if(confirm("Delete sale and return stock?")) {
                 const sale = app.sales.find(s => s.id === saleId);
                 if(sale) {
                     const item = app.inventory.find(i => i.id === sale.itemId);
@@ -476,9 +462,8 @@
                 }
             }
         }
-
         function deletePurchase(pId) {
-            if(confirm("Are you sure you want to delete this stock entry? This will DEDUCT the qty from current inventory.")) {
+            if(confirm("Delete stock entry? Qty will be deducted from inventory.")) {
                 const entry = app.purchases.find(p => p.id === pId);
                 if(entry) {
                     const item = app.inventory.find(i => i.id === entry.itemId);
@@ -488,13 +473,10 @@
                 }
             }
         }
-
         function resetForm() { document.getElementById('add-item-form').reset(); document.getElementById('item-loc').selectedIndex = 0; document.getElementById('cancel-btn').style.display = 'none'; }
-        
         function wipeData() { if(confirm("Delete ALL data?")) { app = { inventory: [], sales: [], purchases: [] }; saveToCloud(); } }
         function exportCSV() { let csv = "Type,Dim,Thick,Len,Loc,Price,Qty,Total\n" + app.inventory.map(i => `${i.type},${i.dimensions},${i.thickness},${i.length},${i.location},${i.price},${i.qty},${i.price*i.qty}`).join('\n'); const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], {type:'text/csv'})); a.download = 'Stock.csv'; a.click(); }
 
-        // --- PRINTING FUNCTIONS ---
         function printReceipt(id) {
             const s = app.sales.find(x => x.id == id); if(!s) return;
             const html = `<div class="receipt-box"><div style="text-align:center; border-bottom:1px dashed black; margin-bottom:10px;"><b>BIRHAN STEEL</b><br>RECEIPT</div>Date: ${s.date}<br>Client: ${s.customer||'Walk-in'}<table style="width:100%; margin-top:10px; border-top:1px dashed black;"><tr><td>${getItemName(s.itemId)}</td><td>x${s.qty}</td><td style="text-align:right;">${formatMoney(s.total)}</td></tr></table><div style="text-align:right; margin-top:10px; border-top:1px dashed black;"><b>TOTAL: ${formatMoney(s.total)}</b></div></div>`;
@@ -506,13 +488,11 @@
             const html = `<div class="report-box"><div class="report-header"><h2>BIRHAN STEEL</h2><h3>Daily Sales Report: ${date}</h3></div><table class="report-table"><thead><tr><th>Client</th><th>Item</th><th>Qty</th><th>Total</th></tr></thead><tbody>${sales.map(s => `<tr><td>${s.customer||'-'}</td><td>${getItemName(s.itemId)}</td><td>${s.qty}</td><td>${formatMoney(s.total)}</td></tr>`).join('')}</tbody></table><h3 style="text-align:right;">Total: ${formatMoney(total)}</h3></div>`;
             document.getElementById('print-area').innerHTML = html; window.print();
         }
-
         function printDailyPurchaseReport(date) {
             const entries = app.purchases.filter(p => p.date === date);
             const html = `<div class="report-box"><div class="report-header"><h2>BIRHAN STEEL</h2><h3>Daily Stock Entry Report: ${date}</h3></div><table class="report-table"><thead><tr><th>Supplier</th><th>Item</th><th>Qty Added</th></tr></thead><tbody>${entries.map(p => `<tr><td>${p.supplier||'-'}</td><td>${getItemName(p.itemId)}</td><td>${p.qty}</td></tr>`).join('')}</tbody></table></div>`;
             document.getElementById('print-area').innerHTML = html; window.print();
         }
-        
         function printStockReport() {
             const date = new Date().toLocaleDateString();
             let totalVal = 0;
@@ -524,19 +504,9 @@
                     return `<tr><td>${i.dimensions} (${i.thickness})</td><td>${i.location}</td><td>${formatMoney(i.price)}</td><td>${i.qty}</td><td style="text-align:right;">${formatMoney(val)}</td></tr>`;
                 }).join('');
             }).join('');
-
-            document.getElementById('print-area').innerHTML = `
-                <div class="report-box">
-                    <div class="report-header"><h2>BIRHAN STEEL</h2><h3>Current Stock Report</h3><p>Generated: ${date}</p></div>
-                    <table class="report-table">
-                        <thead><tr><th>Product</th><th>Location</th><th>Unit Price</th><th>Qty</th><th>Total Value</th></tr></thead>
-                        <tbody>${rows}</tbody>
-                        <tfoot><tr><td colspan="4" style="text-align:right; font-weight:bold;">GRAND TOTAL:</td><td style="text-align:right; font-weight:bold;">${formatMoney(totalVal)}</td></tr></tfoot>
-                    </table>
-                </div>`;
+            document.getElementById('print-area').innerHTML = `<div class="report-box"><div class="report-header"><h2>BIRHAN STEEL</h2><h3>Current Stock Report</h3><p>Generated: ${date}</p></div><table class="report-table"><thead><tr><th>Product</th><th>Location</th><th>Unit Price</th><th>Qty</th><th>Total Value</th></tr></thead><tbody>${rows}</tbody><tfoot><tr><td colspan="4" style="text-align:right; font-weight:bold;">GRAND TOTAL:</td><td style="text-align:right; font-weight:bold;">${formatMoney(totalVal)}</td></tr></tfoot></table></div>`;
             window.print();
         }
-
         setDates();
     </script>
 </body>
