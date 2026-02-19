@@ -184,7 +184,8 @@
             <button class="nav-btn" onclick="switchTab('sales')">💰 Sales</button>
             <button class="nav-btn" onclick="switchTab('purchases')">📥 Entry</button>
             <button class="nav-btn" onclick="switchTab('loans')">🤝 Loans (Admin)</button>
-            <button class="nav-btn" onclick="switchTab('reports')">📋 Report</button>
+            <button class="nav-btn" onclick="switchTab('worker-reports')">📋 Report (Worker)</button>
+            <button class="nav-btn" onclick="switchTab('reports')">📋 Report (Admin)</button>
             <button class="nav-btn" onclick="switchTab('settings')">🛠️ Settings (Admin)</button>
         </div>
     </aside>
@@ -303,9 +304,24 @@
             </div>
         </section>
 
+        <section id="worker-reports" class="section">
+            <div class="flex-between">
+                <h1>Stock Report (Worker)</h1>
+                <div>
+                    <button class="btn btn-outline" onclick="printWorkerStockReport()">🖨️ Print Report</button> 
+                </div>
+            </div>
+            <div class="table-container">
+                <table>
+                    <thead><tr><th>Product</th><th>Location</th><th>Qty</th></tr></thead>
+                    <tbody id="worker-report-table-body"></tbody>
+                </table>
+            </div>
+        </section>
+
         <section id="reports" class="section">
             <div class="flex-between">
-                <h1>Current Stock Report</h1>
+                <h1>Current Stock Report (Admin)</h1>
                 <div>
                     <button class="btn btn-outline" onclick="printStockReport()">🖨️ Print Report</button> 
                     <button class="btn btn-success" onclick="exportCSV()">📥 Export CSV</button>
@@ -380,7 +396,8 @@
         
         // --- NEW SECURE TAB SWITCHING LOGIC ---
         function switchTab(id) { 
-            const protectedTabs = ['dashboard', 'loans', 'settings'];
+            // Added 'reports' to the protected tabs
+            const protectedTabs = ['dashboard', 'loans', 'settings', 'reports'];
 
             // Check if the user is trying to access a protected tab and hasn't unlocked it yet
             if (protectedTabs.includes(id) && !isAdminUnlocked) {
@@ -530,12 +547,19 @@
             renderDashboard(); renderInventory(); renderSalesHistory(); renderPurchaseHistory();
             const opts = `<option value="">-- Select --</option>` + app.inventory.map(i => `<option value="${i.id}">${i.type} ${i.dimensions} - ${i.location} (${i.qty})</option>`).join('');
             document.getElementById('sale-item').innerHTML = opts; document.getElementById('purch-item').innerHTML = opts;
+            
+            // ADMIN REPORT (With Money)
             let totalVal = 0;
             document.getElementById('report-table-body').innerHTML = app.inventory.map(i => {
                 const val = i.price * i.qty; totalVal += val;
                 return `<tr><td>${i.type} ${i.dimensions} (${i.thickness})</td><td>${i.location}</td><td>${formatMoney(i.price)}</td><td>${i.qty}</td><td style="font-weight:bold;">${formatMoney(val)}</td></tr>`;
             }).join('');
             document.getElementById('report-total-value').innerText = formatMoney(totalVal);
+
+            // WORKER REPORT (No Money)
+            document.getElementById('worker-report-table-body').innerHTML = app.inventory.map(i => {
+                return `<tr><td>${i.type} ${i.dimensions} (${i.thickness})</td><td>${i.location}</td><td style="font-weight:bold;">${i.qty}</td></tr>`;
+            }).join('');
         }
 
         function delItem(id) { if(confirm("Delete?")) { app.inventory = app.inventory.filter(i => i.id != id); saveToCloud(); } }
@@ -581,6 +605,7 @@
             const html = `<div class="report-box"><div class="report-header"><h2>BIRHAN STEEL</h2><h3>Daily Stock Entry Report: ${date}</h3></div><table class="report-table"><thead><tr><th>Supplier</th><th>Item</th><th>Qty Added</th></tr></thead><tbody>${entries.map(p => `<tr><td>${p.supplier||'-'}</td><td>${getItemName(p.itemId)}</td><td>${p.qty}</td></tr>`).join('')}</tbody></table></div>`;
             document.getElementById('print-area').innerHTML = html; window.print();
         }
+        
         function printStockReport() {
             const date = new Date().toLocaleDateString();
             let totalVal = 0;
@@ -595,6 +620,20 @@
             document.getElementById('print-area').innerHTML = `<div class="report-box"><div class="report-header"><h2>BIRHAN STEEL</h2><h3>Current Stock Report</h3><p>Generated: ${date}</p></div><table class="report-table"><thead><tr><th>Product</th><th>Location</th><th>Unit Price</th><th>Qty</th><th>Total Value</th></tr></thead><tbody>${rows}</tbody><tfoot><tr><td colspan="4" style="text-align:right; font-weight:bold;">GRAND TOTAL:</td><td style="text-align:right; font-weight:bold;">${formatMoney(totalVal)}</td></tr></tfoot></table></div>`;
             window.print();
         }
+
+        function printWorkerStockReport() {
+            const date = new Date().toLocaleDateString();
+            const types = [...new Set(app.inventory.map(i => i.type))].sort();
+            let rows = types.map(t => {
+                const items = app.inventory.filter(i => i.type === t);
+                return `<tr class="report-group-row"><td colspan="3">📂 ${t}</td></tr>` + items.map(i => {
+                    return `<tr><td>${i.dimensions} (${i.thickness})</td><td>${i.location}</td><td>${i.qty}</td></tr>`;
+                }).join('');
+            }).join('');
+            document.getElementById('print-area').innerHTML = `<div class="report-box"><div class="report-header"><h2>BIRHAN STEEL</h2><h3>Current Stock Report (Worker)</h3><p>Generated: ${date}</p></div><table class="report-table"><thead><tr><th>Product</th><th>Location</th><th>Qty</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+            window.print();
+        }
+
         setDates();
     </script>
 </body>
