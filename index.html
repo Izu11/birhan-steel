@@ -66,6 +66,19 @@
         .inv-count { font-size: 0.85rem; color: #6b7280; }
         .inv-details { display: none; border-top: 1px solid #f3f4f6; } .inv-details.open { display: block; }
         
+        /* SALES HISTORY STYLES (NEW) */
+        .sales-group { background: white; border: 1px solid #e5e7eb; border-radius: 8px; margin-bottom: 20px; overflow: hidden; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+        .sales-date-header { 
+            background: #f8fafc; 
+            padding: 12px 20px; 
+            border-bottom: 1px solid #e5e7eb; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center;
+        }
+        .sales-date-title { font-weight: 700; color: #334155; display: flex; align-items: center; gap: 8px; }
+        .sales-date-total { color: var(--success); font-weight: 700; margin-right: 15px; font-size: 0.95rem; }
+        
         table { width: 100%; border-collapse: collapse; } 
         th { background: #f9fafb; padding: 12px 16px; text-align: left; font-size: 0.75rem; color: #6b7280; font-weight: 600; text-transform: uppercase; border-bottom: 1px solid #e5e7eb; } 
         td { padding: 12px 16px; border-bottom: 1px solid #f3f4f6; color: #374151; font-size: 0.9rem; }
@@ -176,8 +189,13 @@
         </section>
 
         <section id="sales" class="section">
-            <h1 style="margin-bottom:24px;">Sales</h1>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
+                <h1>Sales History</h1>
+                <input type="text" id="searchSales" class="form-control" placeholder="Search..." style="width:250px;" onkeyup="renderSalesHistory()">
+            </div>
+
             <div class="panel">
+                <h3 style="margin-bottom:15px; color:#111827;">New Sale</h3>
                 <form id="sales-form">
                     <div class="form-grid">
                         <div class="form-group"><label>Date</label><input type="date" id="sale-date" class="form-control" required></div>
@@ -331,9 +349,50 @@
             const dims = [...new Set(app.inventory.map(i => i.dimensions))].sort(); document.getElementById('list-dims').innerHTML = dims.map(d=>`<option value="${d}">`).join('');
         }
 
+        // --- NEW SALES HISTORY RENDER ---
         function renderSalesHistory() {
-             const list = app.sales.slice().sort((a,b) => b.id - a.id).slice(0, 50); 
-             document.getElementById('sales-history-container').innerHTML = list.map(s => `<div class="panel" style="padding:15px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center;"><div><span style="color:#6b7280; font-size:0.85rem;">${s.date}</span><br><b>${s.customer||'Walk-in'}</b> - ${getItemName(s.itemId)} (x${s.qty})</div><div style="text-align:right; font-weight:bold; color:var(--success);">${formatMoney(s.total)}</div></div>`).join('');
+            const search = document.getElementById('searchSales').value.toLowerCase();
+            const filtered = app.sales.filter(s => (s.customer||'').toLowerCase().includes(search));
+            
+            // Group by Date
+            const groups = {};
+            filtered.forEach(s => { if(!groups[s.date]) groups[s.date] = []; groups[s.date].push(s); });
+            const dates = Object.keys(groups).sort().reverse(); // Newest first
+
+            if(dates.length === 0) {
+                document.getElementById('sales-history-container').innerHTML = '<div style="padding:20px; text-align:center; color:#6b7280;">No sales history found.</div>';
+                return;
+            }
+
+            let html = '';
+            dates.forEach(date => {
+                const sales = groups[date];
+                const dayTotal = sales.reduce((sum, s) => sum + s.total, 0);
+                
+                html += `
+                <div class="sales-group">
+                    <div class="sales-date-header">
+                        <div class="sales-date-title">📅 ${date}</div>
+                        <div>
+                            <span class="sales-date-total">Total: ${formatMoney(dayTotal)}</span>
+                            <button class="btn btn-outline" style="padding:4px 10px; font-size:0.8rem;" onclick="printDailyReport('${date}')">🖨️ Report</button>
+                        </div>
+                    </div>
+                    <table>
+                        <thead><tr><th>CLIENT</th><th>ITEM</th><th>QTY</th><th>TOTAL</th><th>ACTION</th></tr></thead>
+                        <tbody>${sales.map(s => `
+                            <tr>
+                                <td>${s.customer || 'Walk-in'}</td>
+                                <td>${getItemName(s.itemId)}</td>
+                                <td>${s.qty}</td>
+                                <td>${formatMoney(s.total)}</td>
+                                <td><button class="btn btn-primary" style="padding:4px 12px; font-size:0.8rem;" onclick="printReceipt('${s.id}')">Reprint</button></td>
+                            </tr>`).join('')}
+                        </tbody>
+                    </table>
+                </div>`;
+            });
+            document.getElementById('sales-history-container').innerHTML = html;
         }
 
         // Actions
@@ -400,6 +459,20 @@
                 return `<tr><td>${i.type} ${i.dimensions}</td><td>${i.location}</td><td>${formatMoney(i.price)}</td><td>${i.qty}</td><td>${formatMoney(val)}</td></tr>`;
             }).join('');
             document.getElementById('report-total-value').innerText = formatMoney(totalVal);
+        }
+
+        // --- PRINTING FUNCTIONS ---
+        function printReceipt(id) {
+            const s = app.sales.find(x => x.id == id); if(!s) return;
+            const html = `<div class="report-box"><div style="text-align:center; border-bottom:1px dashed black; margin-bottom:10px;"><b>BIRHAN STEEL</b><br>RECEIPT</div>Date: ${s.date}<br>Client: ${s.customer||'Walk-in'}<table style="width:100%; margin-top:10px; border-top:1px dashed black;"><tr><td>${getItemName(s.itemId)}</td><td>x${s.qty}</td><td style="text-align:right;">${formatMoney(s.total)}</td></tr></table><div style="text-align:right; margin-top:10px; border-top:1px dashed black;"><b>TOTAL: ${formatMoney(s.total)}</b></div></div>`;
+            document.getElementById('print-area').innerHTML = html; window.print();
+        }
+
+        function printDailyReport(date) {
+            const sales = app.sales.filter(s => s.date === date);
+            const total = sales.reduce((sum,s) => sum+s.total, 0);
+            const html = `<div class="report-box"><div class="report-header"><h2>BIRHAN STEEL</h2><h3>Daily Sales Report: ${date}</h3></div><table class="report-table"><thead><tr><th>Client</th><th>Item</th><th>Qty</th><th>Total</th></tr></thead><tbody>${sales.map(s => `<tr><td>${s.customer||'-'}</td><td>${getItemName(s.itemId)}</td><td>${s.qty}</td><td>${formatMoney(s.total)}</td></tr>`).join('')}</tbody></table><h3 style="text-align:right;">Total Revenue: ${formatMoney(total)}</h3></div>`;
+            document.getElementById('print-area').innerHTML = html; window.print();
         }
 
         function printStockReport() {
