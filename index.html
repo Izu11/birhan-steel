@@ -19,9 +19,11 @@
             --text-main: #1e293b;     /* Dark Slate */
             --text-muted: #64748b;    /* Muted Gray */
             --border: #e2e8f0;        /* Light Border */
+            
             --success: #10b981;       /* Green */
             --danger: #ef4444;        /* Red */
             --warning: #f59e0b;       /* Orange/Yellow */
+            
             --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
             --radius: 12px;
         }
@@ -29,7 +31,7 @@
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
         body { background-color: var(--bg); color: var(--text-main); display: flex; height: 100vh; overflow: hidden; }
 
-        /* --- SIDEBAR --- */
+        /* --- SIDEBAR (Desktop Left) --- */
         .sidebar { 
             width: 260px; 
             background: var(--primary); 
@@ -38,6 +40,7 @@
             flex-direction: column; 
             box-shadow: 4px 0 10px rgba(0,0,0,0.1);
             z-index: 10;
+            transition: all 0.3s ease;
         }
         
         .sidebar-header { 
@@ -89,93 +92,81 @@
 
         h1 { font-size: 1.8rem; font-weight: 700; color: var(--primary); margin-bottom: 25px; letter-spacing: -0.5px; }
 
-        /* --- CARDS --- */
-        .grid-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 25px; margin-bottom: 35px; }
-        .card { 
-            background: var(--surface); padding: 25px; border-radius: var(--radius); 
-            box-shadow: var(--shadow); border: 1px solid var(--border);
-            transition: transform 0.2s, box-shadow 0.2s; position: relative; overflow: hidden;
+        /* --- MOBILE RESPONSIVE ENGINE (TOP MENU) --- */
+        @media (max-width: 800px) {
+            body { flex-direction: column; }
+            .sidebar { 
+                width: 100%; 
+                height: auto; 
+                flex-direction: column; 
+                position: relative; 
+                box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            }
+            .sidebar-header {
+                padding: 15px;
+                flex-direction: row;
+                justify-content: center;
+            }
+            .logo-img { width: 40px; height: 40px; margin: 0 10px 0 0; }
+            .nav-items { 
+                display: flex; 
+                padding-top: 0; 
+                overflow-x: auto; 
+                border-top: 1px solid #475569;
+                scrollbar-width: none; /* Hide scrollbar for clean look */
+            }
+            .nav-items::-webkit-scrollbar { display: none; }
+            .nav-btn { 
+                padding: 15px 20px; 
+                width: auto; 
+                white-space: nowrap; 
+                border-left: none; 
+                border-bottom: 3px solid transparent; 
+            }
+            .nav-btn:hover { padding-left: 20px; }
+            .nav-btn.active { 
+                border-left-color: transparent; 
+                border-bottom-color: var(--accent); 
+            }
+            .main-content { padding: 20px; }
+            .grid-cards { grid-template-columns: 1fr; gap: 15px; }
+            .form-row { grid-template-columns: 1fr; gap: 10px; }
+            .flex-between { flex-direction: column; align-items: flex-start; gap: 15px; }
+            .flex-between input { width: 100% !important; }
+            .table-container { overflow-x: auto; }
+            table { min-width: 600px; }
         }
-        .card:hover { transform: translateY(-4px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
+
+        /* Rest of the provided Styles */
+        .grid-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 25px; margin-bottom: 35px; }
+        .card { background: var(--surface); padding: 25px; border-radius: var(--radius); box-shadow: var(--shadow); border: 1px solid var(--border); position: relative; overflow: hidden; }
         .card::before { content: ''; position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: var(--accent); }
         .card h3 { font-size: 0.85rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; margin-bottom: 8px; }
         .card .value { font-size: 2.2rem; font-weight: 800; color: var(--text-main); }
         .card.interactive { cursor: pointer; }
         .card.interactive::before { background: var(--danger); }
         .card.interactive:hover { background-color: #fef2f2; }
-        .card.interactive .value { color: var(--danger); }
-
-        /* --- FORMS & TABLES --- */
         .panel { background: var(--surface); padding: 30px; border-radius: var(--radius); box-shadow: var(--shadow); border: 1px solid var(--border); margin-bottom: 30px; }
         .form-group { margin-bottom: 20px; }
         .form-group label { display: block; margin-bottom: 8px; font-weight: 600; font-size: 0.9rem; color: var(--text-main); }
         .form-control { width: 100%; padding: 12px 16px; border: 2px solid var(--border); border-radius: 8px; font-size: 1rem; background: #f8fafc; }
-        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        
-        .btn { padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-size: 0.95rem; font-weight: 600; transition: transform 0.1s; }
-        .btn:active { transform: scale(0.98); }
+        .btn { padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-size: 0.95rem; font-weight: 600; }
         .btn-primary { background: var(--accent); color: white; }
         .btn-success { background: var(--success); color: white; }
         .btn-danger { background: var(--danger); color: white; }
-        .btn-warning { background: var(--warning); color: white; }
         .btn-outline { background: white; border: 2px solid var(--border); color: var(--text-main); }
+        .btn-warning { background: var(--warning); color: white; }
         .btn-sm { padding: 6px 12px; font-size: 0.85rem; border-radius: 6px; }
-
         .table-container { background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow); border: 1px solid var(--border); overflow: hidden; }
         table { width: 100%; border-collapse: collapse; }
         th { background: #f8fafc; color: var(--text-muted); font-weight: 700; text-transform: uppercase; font-size: 0.75rem; padding: 15px 20px; border-bottom: 2px solid var(--border); text-align: left; }
         td { padding: 16px 20px; border-bottom: 1px solid var(--border); color: var(--text-main); font-size: 0.95rem; }
-        tr:hover td { background-color: #f8fafc; }
-
         .group-header { background: #f8fafc; padding: 18px 25px; cursor: pointer; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
         .group-details { display: none; background: white; border-bottom: 1px solid var(--border); }
         .group-details.open { display: block; }
-        .flex-between { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
         .badge { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; background: #e2e8f0; color: #475569; }
-
-        /* --- MOBILE RESPONSIVE ENGINE --- */
-        @media (max-width: 800px) {
-            body { flex-direction: column; }
-            .sidebar { 
-                width: 100%; height: 70px; position: fixed; bottom: 0; left: 0; 
-                flex-direction: row; border-top: 1px solid #334155; border-right: none; 
-            }
-            .sidebar-header { display: none; }
-            .nav-items { display: flex; padding: 0; width: 100%; justify-content: space-around; overflow: hidden; }
-            .nav-btn { 
-                flex-direction: column; padding: 10px 0; text-align: center; font-size: 0.65rem; 
-                border-left: none; border-top: 3px solid transparent; justify-content: center;
-            }
-            .nav-btn:hover { padding-left: 0; }
-            .nav-btn.active { border-top-color: var(--accent); border-left: none; background: rgba(37, 99, 235, 0.1); }
-            
-            .main-content { padding: 20px; padding-bottom: 90px; } /* Space for bottom nav */
-            .grid-cards { grid-template-columns: 1fr; }
-            .form-row { grid-template-columns: 1fr; gap: 10px; }
-            .flex-between { flex-direction: column; align-items: flex-start; gap: 15px; }
-            .flex-between input { width: 100% !important; }
-            .panel { padding: 15px; }
-            .table-container { overflow-x: auto; } /* Horizontal scroll for small screens */
-            table { min-width: 600px; } 
-            h1 { font-size: 1.4rem; }
-        }
-
-        /* --- LOADER --- */
         #cloud-loader { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.9); z-index: 100; display: flex; justify-content: center; align-items: center; flex-direction: column; font-weight: bold; color: var(--accent); }
-
-        /* --- PRINT STYLES --- */
         #print-area { display: none; }
-        @media print {
-            body > *:not(#print-area) { display: none !important; }
-            #print-area { display: block !important; position: absolute; top: 0; left: 0; width: 100%; }
-            .receipt-box { width: 80mm; margin: 0 auto; font-family: monospace; padding: 10px; border: 1px solid #000; }
-            .report-box { width: 100%; font-family: sans-serif; padding: 20px; }
-            .report-header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid #000; padding-bottom: 10px; }
-            .report-table { width: 100%; border-collapse: collapse; font-size: 12px; }
-            .report-table th { background-color: #e0e0e0 !important; -webkit-print-color-adjust: exact; }
-            .report-table th, .report-table td { border: 1px solid #000; padding: 8px; text-align: left; }
-            .report-group-row { background-color: #f0f0f0 !important; font-weight: bold; -webkit-print-color-adjust: exact; }
-        }
     </style>
 </head>
 <body>
@@ -188,12 +179,13 @@
             <h2>BIRHAN STEEL</h2>
         </div>
         <div class="nav-items">
-            <button class="nav-btn active" onclick="switchTab('dashboard')">🏠 Dash</button>
+            <button class="nav-btn active" onclick="switchTab('dashboard')">📊 Dash</button>
             <button class="nav-btn" onclick="switchTab('inventory')">📦 Stock</button>
             <button class="nav-btn" onclick="switchTab('sales')">💰 Sales</button>
             <button class="nav-btn" onclick="switchTab('purchases')">📥 Entry</button>
+            <button class="nav-btn" onclick="switchTab('loans')">🤝 Loans</button>
             <button class="nav-btn" onclick="switchTab('reports')">📋 Report</button>
-            <button class="nav-btn" onclick="switchTab('settings')">🛠️ Set</button>
+            <button class="nav-btn" onclick="switchTab('settings')">🛠️ Settings</button>
         </div>
     </aside>
 
@@ -205,11 +197,21 @@
                 <div class="card"><h3>Stock Value (Store)</h3><div class="value" id="dash-value-store">ETB 0</div></div>
                 <div class="card interactive" onclick="scrollToLowStock()">
                     <h3>⚠️ Low Stock Alerts</h3><div class="value" id="dash-low">0</div>
-                    <div style="font-size:0.85rem; margin-top:8px; color:var(--danger); font-weight:600;">Items < 20 units</div>
                 </div>
             </div>
+            
+            <div id="dashboard-loans-section" style="margin-top:40px;">
+                <h2 style="color: var(--warning); margin-bottom:15px;">🤝 Active Loans</h2>
+                <div class="table-container" style="border-top: 4px solid var(--warning);">
+                    <table>
+                        <thead><tr><th>Date</th><th>Name</th><th>Phone Number</th><th>Items Loaned</th><th>Amount</th><th>Action</th></tr></thead>
+                        <tbody id="dash-loans-table"></tbody>
+                    </table>
+                </div>
+            </div>
+
             <div id="low-stock-section" style="display:none; margin-top:40px;">
-                <h2 style="color: var(--danger);">⚠️ Items Needing Reorder</h2>
+                <h2 style="color: var(--danger); margin-bottom:15px;">⚠️ Items Needing Reorder</h2>
                 <div class="table-container" style="border-top: 4px solid var(--danger);">
                     <table><thead><tr><th>Product</th><th>Dimensions</th><th>Thick</th><th>Location</th><th>Qty Left</th></tr></thead><tbody id="dash-low-stock-table"></tbody></table>
                 </div>
@@ -222,7 +224,7 @@
                 <input type="text" id="searchInput" class="form-control" placeholder="🔍 Search..." style="width: 300px;" onkeyup="renderInventory()">
             </div>
             <div class="panel">
-                <h3 style="margin-bottom:20px; color:var(--primary);">Add New Product</h3>
+                <h3>Add New Product</h3>
                 <form id="add-item-form">
                     <datalist id="list-types"></datalist><datalist id="list-dims"></datalist>
                     <div class="form-row">
@@ -281,6 +283,26 @@
             <div id="purchase-history-container"></div>
         </section>
 
+        <section id="loans" class="section">
+            <h1>Loan Management</h1>
+            <div class="panel">
+                <form id="loan-form">
+                    <div class="form-row">
+                        <div class="form-group"><label>Date</label><input type="date" id="loan-date" class="form-control" required></div>
+                        <div class="form-group"><label>Customer Name</label><input type="text" id="loan-name" class="form-control" placeholder="Full Name" required></div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group"><label>Phone Number</label><input type="text" id="loan-phone" class="form-control" placeholder="09..." required></div>
+                        <div class="form-group"><label>Items Loaned</label><input type="text" id="loan-items" class="form-control" placeholder="e.g. 5x Pipe 40x40" required></div>
+                    </div>
+                    <div class="form-group">
+                        <label>Amount (ETB)</label><input type="number" step="0.01" id="loan-amount" class="form-control" placeholder="0.00" required>
+                    </div>
+                    <button type="submit" class="btn btn-warning" style="width:100%; margin-top:10px;">Record Loan</button>
+                </form>
+            </div>
+        </section>
+
         <section id="reports" class="section">
             <div class="flex-between">
                 <h1>Current Stock Report</h1>
@@ -324,7 +346,7 @@
         };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
-        let app = { inventory: [], sales: [], purchases: [] };
+        let app = { inventory: [], sales: [], purchases: [], loans: [] };
         const LOW_STOCK_THRESHOLD = 20;
 
         db.collection('birhan_data').doc('main').onSnapshot((doc) => {
@@ -334,13 +356,20 @@
                 if(!app.inventory) app.inventory = [];
                 if(!app.sales) app.sales = [];
                 if(!app.purchases) app.purchases = [];
+                if(!app.loans) app.loans = [];
                 refresh();
             } else { saveToCloud(); }
         }, (error) => { alert("Connection error. Check Firebase."); });
 
         function saveToCloud() { db.collection('birhan_data').doc('main').set(app); }
 
-        function setDates() { const today = new Date().toISOString().split('T')[0]; document.getElementById('sale-date').value = today; document.getElementById('purch-date').value = today; }
+        function setDates() { 
+            const today = new Date().toISOString().split('T')[0]; 
+            document.getElementById('sale-date').value = today; 
+            document.getElementById('purch-date').value = today; 
+            document.getElementById('loan-date').value = today; 
+        }
+        
         function switchTab(id) { 
             document.querySelectorAll('.section').forEach(el => el.classList.remove('active')); 
             document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active')); 
@@ -348,6 +377,7 @@
             event.currentTarget.classList.add('active'); 
             window.scrollTo(0,0);
         }
+        
         function formatMoney(n) { return 'ETB ' + parseFloat(n).toLocaleString('en-ET', {minimumFractionDigits:2}); }
         function getItemName(id) { const i = app.inventory.find(x => x.id == id); return i ? `${i.type} ${i.dimensions} (${i.thickness})` : 'Unknown'; }
 
@@ -358,6 +388,19 @@
             document.getElementById('dash-value-cambridge').innerText = formatMoney(valCam);
             document.getElementById('dash-value-store').innerText = formatMoney(valStore);
             document.getElementById('dash-low').innerText = low.length;
+            
+            // Render Loans on Dashboard
+            document.getElementById('dash-loans-table').innerHTML = (app.loans || []).map(l => `
+                <tr>
+                    <td>${l.date}</td>
+                    <td><b>${l.name}</b></td>
+                    <td>${l.phone}</td>
+                    <td>${l.items}</td>
+                    <td style="color:var(--danger); font-weight:bold;">${formatMoney(l.amount)}</td>
+                    <td><button class="btn btn-success btn-sm" onclick="clearLoan('${l.id}')">Clear Paid</button></td>
+                </tr>
+            `).join('') || '<tr><td colspan="6" style="text-align:center; padding:20px;">No active loans</td></tr>';
+
             if(low.length > 0) {
                 document.getElementById('low-stock-section').style.display = 'block';
                 document.getElementById('dash-low-stock-table').innerHTML = low.map(i => `<tr><td><b>${i.type}</b></td><td>${i.dimensions}</td><td>${i.thickness}</td><td><span class="badge">${i.location}</span></td><td style="color:var(--danger); font-weight:bold;">${i.qty}</td></tr>`).join('');
@@ -387,16 +430,16 @@
             const dates = Object.keys(groups).sort().reverse();
             document.getElementById('sales-history-container').innerHTML = dates.map(date => {
                 const total = groups[date].reduce((sum, s) => sum + s.total, 0);
-                return `<div style="margin-bottom:20px; border:1px solid #e2e8f0; border-radius:8px; background:white; overflow:hidden;"><div style="background:#f8fafc; padding:10px 20px; border-bottom:1px solid #e2e8f0; display:flex; justify-content:space-between;"><b>📅 ${date}</b><div><span style="margin-right:15px; color:var(--success); font-weight:bold;">Total: ${formatMoney(total)}</span><button class="btn btn-outline btn-sm" onclick="printDailyReport('${date}')">🖨️ Report</button></div></div><div class="table-container"><table><thead><tr><th>Client</th><th>Item</th><th>Qty</th><th>Total</th><th></th></tr></thead><tbody>${groups[date].map(s => `<tr><td>${s.customer||'-'}</td><td>${getItemName(s.itemId)}</td><td>${s.qty}</td><td>${formatMoney(s.total)}</td><td style="display:flex; gap:5px;"><button class="btn btn-primary btn-sm" onclick="printReceipt('${s.id}')">Print</button><button class="btn btn-danger btn-sm" onclick="deleteSale('${s.id}')">Delete</button></td></tr>`).join('')}</tbody></table></div></div>`;
+                return `<div class="panel" style="padding:0; overflow:hidden; margin-bottom:20px;"><div style="background:#f8fafc; padding:15px; display:flex; justify-content:space-between;"><b>📅 ${date}</b><span style="color:var(--success); font-weight:bold;">Total: ${formatMoney(total)}</span></div><div class="table-container"><table><thead><tr><th>Client</th><th>Item</th><th>Qty</th><th>Total</th><th></th></tr></thead><tbody>${groups[date].map(s => `<tr><td>${s.customer||'-'}</td><td>${getItemName(s.itemId)}</td><td>${s.qty}</td><td>${formatMoney(s.total)}</td><td style="display:flex; gap:5px;"><button class="btn btn-primary btn-sm" onclick="printReceipt('${s.id}')">Print</button><button class="btn btn-danger btn-sm" onclick="deleteSale('${s.id}')">Delete</button></td></tr>`).join('')}</tbody></table></div></div>`;
             }).join('') || '<div style="padding:20px;">No sales found.</div>';
         }
 
         function renderPurchaseHistory() {
             const groups = {}; app.purchases.forEach(p => { if(!groups[p.date]) groups[p.date] = []; groups[p.date].push(p); });
             const dates = Object.keys(groups).sort().reverse();
-            document.getElementById('purchase-history-container').innerHTML = dates.map(date => {
-                return `<div style="margin-bottom:20px; border:1px solid #e2e8f0; border-radius:8px; background:white; overflow:hidden;"><div style="background:#f8fafc; padding:10px 20px; border-bottom:1px solid #e2e8f0; display:flex; justify-content:space-between;"><b>📅 ${date}</b><button class="btn btn-outline btn-sm" onclick="printDailyPurchaseReport('${date}')">🖨️ Report</button></div><div class="table-container"><table><thead><tr><th>Supplier</th><th>Item</th><th>Qty Added</th><th></th></tr></thead><tbody>${groups[date].map(p => `<tr><td>${p.supplier||'-'}</td><td>${getItemName(p.itemId)}</td><td>${p.qty}</td><td><button class="btn btn-danger btn-sm" onclick="deletePurchase('${p.id}')">Delete</button></td></tr>`).join('')}</tbody></table></div></div>`;
-            }).join('') || '<div style="padding:20px;">No entries found.</div>';
+            document.getElementById('purchase-history-container').innerHTML = dates.map(date => `
+                <div class="panel" style="padding:0; overflow:hidden; margin-bottom:20px;"><div style="background:#f8fafc; padding:15px; display:flex; justify-content:space-between;"><b>📅 ${date}</b><button class="btn btn-outline btn-sm" onclick="printDailyPurchaseReport('${date}')">🖨️ Report</button></div><div class="table-container"><table><thead><tr><th>Supplier</th><th>Item</th><th>Qty Added</th><th></th></tr></thead><tbody>${groups[date].map(p => `<tr><td>${p.supplier||'-'}</td><td>${getItemName(p.itemId)}</td><td>${p.qty}</td><td><button class="btn btn-danger btn-sm" onclick="deletePurchase('${p.id}')">Delete</button></td></tr>`).join('')}</tbody></table></div></div>
+            `).join('') || '<div style="padding:20px;">No entries found.</div>';
         }
 
         function duplicateItem(id) {
@@ -428,15 +471,35 @@
 
         document.getElementById('purchase-form').addEventListener('submit', e => {
             e.preventDefault(); 
-            const id = document.getElementById('purch-item').value; 
-            const qty = parseInt(document.getElementById('purch-qty').value); 
-            const item = app.inventory.find(i => i.id == id);
-            if(item) { 
-                item.qty += qty; 
-                app.purchases.push({ id: Date.now().toString(), date: document.getElementById('purch-date').value, itemId: id, qty, supplier: document.getElementById('purch-supp').value });
-                saveToCloud(); alert("Stock Added!"); e.target.reset(); setDates(); 
-            }
+            const id = document.getElementById('purch-item').value; const qty = parseInt(document.getElementById('purch-qty').value); const item = app.inventory.find(i => i.id == id);
+            if(item) { item.qty += qty; app.purchases.push({ id: Date.now().toString(), date: document.getElementById('purch-date').value, itemId: id, qty, supplier: document.getElementById('purch-supp').value }); saveToCloud(); alert("Stock Added!"); e.target.reset(); setDates(); }
         });
+
+        // NEW LOAN SUBMIT LISTENER
+        document.getElementById('loan-form').addEventListener('submit', e => {
+            e.preventDefault();
+            const loan = {
+                id: Date.now().toString(),
+                date: document.getElementById('loan-date').value,
+                name: document.getElementById('loan-name').value.trim(),
+                phone: document.getElementById('loan-phone').value.trim(),
+                items: document.getElementById('loan-items').value.trim(),
+                amount: parseFloat(document.getElementById('loan-amount').value)
+            };
+            app.loans.push(loan);
+            saveToCloud();
+            e.target.reset();
+            setDates();
+            switchTab('dashboard'); // Take user to dashboard to see it
+            alert("Loan Recorded Successfully!");
+        });
+
+        function clearLoan(id) {
+            if(confirm("Mark this loan as paid and clear it from the dashboard?")) {
+                app.loans = app.loans.filter(l => l.id !== id);
+                saveToCloud();
+            }
+        }
 
         function refresh() {
             renderDashboard(); renderInventory(); renderSalesHistory(); renderPurchaseHistory();
@@ -474,7 +537,7 @@
             }
         }
         function resetForm() { document.getElementById('add-item-form').reset(); document.getElementById('item-loc').selectedIndex = 0; document.getElementById('cancel-btn').style.display = 'none'; }
-        function wipeData() { if(confirm("Delete ALL data?")) { app = { inventory: [], sales: [], purchases: [] }; saveToCloud(); } }
+        function wipeData() { if(confirm("Delete ALL data?")) { app = { inventory: [], sales: [], purchases: [], loans: [] }; saveToCloud(); } }
         function exportCSV() { let csv = "Type,Dim,Thick,Len,Loc,Price,Qty,Total\n" + app.inventory.map(i => `${i.type},${i.dimensions},${i.thickness},${i.length},${i.location},${i.price},${i.qty},${i.price*i.qty}`).join('\n'); const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], {type:'text/csv'})); a.download = 'Stock.csv'; a.click(); }
 
         function printReceipt(id) {
