@@ -200,14 +200,17 @@
             <h2>BIRHAN STEEL</h2>
         </div>
         <div class="nav-items">
-            <button class="nav-btn" onclick="switchTab('dashboard')">📊 Dash (Admin)</button>
             <button class="nav-btn active" onclick="switchTab('inventory')">📦 Stock</button>
             <button class="nav-btn" onclick="switchTab('sales')">💰 Sales</button>
             <button class="nav-btn" onclick="switchTab('purchases')">📥 Entry</button>
-            <button class="nav-btn" onclick="switchTab('loans')">🤝 Loans (Admin)</button>
             <button class="nav-btn" onclick="switchTab('worker-reports')">📋 Report (Worker)</button>
-            <button class="nav-btn" onclick="switchTab('reports')">📋 Report (Admin)</button>
-            <button class="nav-btn" onclick="switchTab('settings')">🛠️ Settings (Admin)</button>
+            
+            <button class="nav-btn" id="btn-admin-login" onclick="unlockAdmin()">🔐 Admin Login</button>
+
+            <button class="nav-btn admin-only" style="display:none;" onclick="switchTab('dashboard')">📊 Dashboard</button>
+            <button class="nav-btn admin-only" style="display:none;" onclick="switchTab('loans')">🤝 Loans</button>
+            <button class="nav-btn admin-only" style="display:none;" onclick="switchTab('reports')">📋 Report (Admin)</button>
+            <button class="nav-btn admin-only" style="display:none;" onclick="switchTab('settings')">🛠️ Settings</button>
         </div>
     </aside>
 
@@ -414,17 +417,33 @@
             document.getElementById('loan-date').value = today; 
         }
         
+        // --- ADMIN UNLOCK FUNCTION ---
+        function unlockAdmin() {
+            if (!isAdminUnlocked) {
+                const enteredPin = prompt("Admin Access Required. Enter PIN:");
+                if (enteredPin === ADMIN_PIN) {
+                    isAdminUnlocked = true;
+                    // Hide the login button
+                    document.getElementById('btn-admin-login').style.display = 'none';
+                    // Show all admin buttons
+                    document.querySelectorAll('.admin-only').forEach(btn => {
+                        btn.style.display = 'flex'; 
+                    });
+                    // Automatically switch to the dashboard
+                    switchTab('dashboard');
+                } else {
+                    alert("Incorrect PIN. Access Denied.");
+                }
+            }
+        }
+
+        // --- SECURE TAB SWITCHING LOGIC ---
         function switchTab(id) { 
             const protectedTabs = ['dashboard', 'loans', 'settings', 'reports'];
 
             if (protectedTabs.includes(id) && !isAdminUnlocked) {
-                const enteredPin = prompt("Admin Access Required. Enter PIN:");
-                if (enteredPin === ADMIN_PIN) {
-                    isAdminUnlocked = true; 
-                } else {
-                    alert("Incorrect PIN. Access Denied.");
-                    return; 
-                }
+                alert("Access Denied.");
+                return; 
             }
 
             document.querySelectorAll('.section').forEach(el => el.classList.remove('active')); 
@@ -485,169 +504,4 @@
         function renderSalesHistory() {
             const search = document.getElementById('searchSales').value.toLowerCase();
             const filtered = app.sales.filter(s => (s.customer||'').toLowerCase().includes(search));
-            const groups = {}; filtered.forEach(s => { if(!groups[s.date]) groups[s.date] = []; groups[s.date].push(s); });
-            const dates = Object.keys(groups).sort().reverse();
-            document.getElementById('sales-history-container').innerHTML = dates.map(date => {
-                const total = groups[date].reduce((sum, s) => sum + s.total, 0);
-                return `<div class="panel" style="padding:0; overflow:hidden; margin-bottom:20px;"><div style="background:#f8fafc; padding:15px; display:flex; justify-content:space-between;"><b>📅 ${date}</b><span style="color:var(--success); font-weight:bold;">Total: ${formatMoney(total)}</span></div><div class="table-container"><table><thead><tr><th>Client</th><th>Item</th><th>Qty</th><th>Total</th><th></th></tr></thead><tbody>${groups[date].map(s => `<tr><td>${s.customer||'-'}</td><td>${getItemName(s.itemId)}</td><td>${s.qty}</td><td>${formatMoney(s.total)}</td><td style="display:flex; gap:5px;"><button class="btn btn-primary btn-sm" onclick="printReceipt('${s.id}')">Print</button><button class="btn btn-danger btn-sm" onclick="deleteSale('${s.id}')">Delete</button></td></tr>`).join('')}</tbody></table></div></div>`;
-            }).join('') || '<div style="padding:20px;">No sales found.</div>';
-        }
-
-        function renderPurchaseHistory() {
-            const groups = {}; app.purchases.forEach(p => { if(!groups[p.date]) groups[p.date] = []; groups[p.date].push(p); });
-            const dates = Object.keys(groups).sort().reverse();
-            document.getElementById('purchase-history-container').innerHTML = dates.map(date => `
-                <div class="panel" style="padding:0; overflow:hidden; margin-bottom:20px;"><div style="background:#f8fafc; padding:15px; display:flex; justify-content:space-between;"><b>📅 ${date}</b><button class="btn btn-outline btn-sm" onclick="printDailyPurchaseReport('${date}')">🖨️ Report</button></div><div class="table-container"><table><thead><tr><th>Supplier</th><th>Item</th><th>Qty Added</th><th></th></tr></thead><tbody>${groups[date].map(p => `<tr><td>${p.supplier||'-'}</td><td>${getItemName(p.itemId)}</td><td>${p.qty}</td><td><button class="btn btn-danger btn-sm" onclick="deletePurchase('${p.id}')">Delete</button></td></tr>`).join('')}</tbody></table></div></div>
-            `).join('') || '<div style="padding:20px;">No entries found.</div>';
-        }
-
-        function duplicateItem(id) {
-            const item = app.inventory.find(i => i.id == id);
-            if(!item) return;
-            document.getElementById('item-type').value = item.type; document.getElementById('item-dim').value = item.dimensions; document.getElementById('item-thick').value = item.thickness; document.getElementById('item-len').value = item.length; document.getElementById('item-price').value = item.price; document.getElementById('item-qty').value = 0; document.getElementById('item-loc').value = item.location;
-            document.getElementById('cancel-btn').style.display = 'inline-block'; window.scrollTo({top:0, behavior:'smooth'});
-        }
-
-        document.getElementById('add-item-form').addEventListener('submit', e => {
-            e.preventDefault();
-            const type = document.getElementById('item-type').value.trim();
-            const dim = document.getElementById('item-dim').value.trim();
-            const thick = document.getElementById('item-thick').value.trim() || '-';
-            const len = document.getElementById('item-len').value.trim() || '-';
-            const loc = document.getElementById('item-loc').value; 
-            const price = parseFloat(document.getElementById('item-price').value);
-            const qty = parseInt(document.getElementById('item-qty').value);
-            const exist = app.inventory.find(i => (i.type||"").toLowerCase()===type.toLowerCase() && (i.dimensions||"").toLowerCase()===dim.toLowerCase() && (i.thickness||"").toLowerCase()===thick.toLowerCase() && (i.length||"").toLowerCase()===len.toLowerCase() && (i.location||"").toLowerCase()===loc.toLowerCase());
-            if(exist) { exist.qty += qty; exist.price = price; } else { app.inventory.push({ id: Date.now().toString(), type, dimensions: dim, thickness: thick, length: len, price, qty, location: loc }); }
-            saveToCloud(); resetForm();
-        });
-
-        document.getElementById('sales-form').addEventListener('submit', e => {
-            e.preventDefault();
-            const id = document.getElementById('sale-item').value; const qty = parseInt(document.getElementById('sale-qty').value); const item = app.inventory.find(i => i.id == id);
-            if(item && item.qty >= qty) { item.qty -= qty; const saleId = Date.now().toString(); app.sales.push({ id: saleId, date: document.getElementById('sale-date').value, itemId: id, qty, customer: document.getElementById('sale-customer').value, total: qty*item.price, priceAtSale: item.price }); saveToCloud(); if(confirm("Sale Recorded! Print Receipt?")) printReceipt(saleId); e.target.reset(); setDates(); } else { alert("Low Stock!"); }
-        });
-
-        document.getElementById('purchase-form').addEventListener('submit', e => {
-            e.preventDefault(); 
-            const id = document.getElementById('purch-item').value; const qty = parseInt(document.getElementById('purch-qty').value); const item = app.inventory.find(i => i.id == id);
-            if(item) { item.qty += qty; app.purchases.push({ id: Date.now().toString(), date: document.getElementById('purch-date').value, itemId: id, qty, supplier: document.getElementById('purch-supp').value }); saveToCloud(); alert("Stock Added!"); e.target.reset(); setDates(); }
-        });
-
-        document.getElementById('loan-form').addEventListener('submit', e => {
-            e.preventDefault();
-            const loan = {
-                id: Date.now().toString(),
-                date: document.getElementById('loan-date').value,
-                name: document.getElementById('loan-name').value.trim(),
-                phone: document.getElementById('loan-phone').value.trim(),
-                items: document.getElementById('loan-items').value.trim(),
-                amount: parseFloat(document.getElementById('loan-amount').value)
-            };
-            app.loans.push(loan);
-            saveToCloud();
-            e.target.reset();
-            setDates();
-            switchTab('dashboard'); 
-            alert("Loan Recorded Successfully!");
-        });
-
-        function clearLoan(id) {
-            if(confirm("Mark this loan as paid and clear it from the dashboard?")) {
-                app.loans = app.loans.filter(l => l.id !== id);
-                saveToCloud();
-            }
-        }
-
-        function refresh() {
-            renderDashboard(); renderInventory(); renderSalesHistory(); renderPurchaseHistory();
-            const opts = `<option value="">-- Select --</option>` + app.inventory.map(i => `<option value="${i.id}">${i.type} ${i.dimensions} - ${i.location} (${i.qty})</option>`).join('');
-            document.getElementById('sale-item').innerHTML = opts; document.getElementById('purch-item').innerHTML = opts;
-            
-            let totalVal = 0;
-            document.getElementById('report-table-body').innerHTML = app.inventory.map(i => {
-                const val = i.price * i.qty; totalVal += val;
-                return `<tr><td>${i.type} ${i.dimensions} (${i.thickness})</td><td>${i.location}</td><td>${formatMoney(i.price)}</td><td>${i.qty}</td><td style="font-weight:bold;">${formatMoney(val)}</td></tr>`;
-            }).join('');
-            document.getElementById('report-total-value').innerText = formatMoney(totalVal);
-
-            document.getElementById('worker-report-table-body').innerHTML = app.inventory.map(i => {
-                return `<tr><td>${i.type} ${i.dimensions} (${i.thickness})</td><td>${i.location}</td><td style="font-weight:bold;">${i.qty}</td></tr>`;
-            }).join('');
-        }
-
-        function delItem(id) { if(confirm("Delete?")) { app.inventory = app.inventory.filter(i => i.id != id); saveToCloud(); } }
-        function deleteSale(saleId) {
-            if(confirm("Delete sale and return stock?")) {
-                const sale = app.sales.find(s => s.id === saleId);
-                if(sale) {
-                    const item = app.inventory.find(i => i.id === sale.itemId);
-                    if(item) item.qty += parseInt(sale.qty);
-                    app.sales = app.sales.filter(s => s.id !== saleId);
-                    saveToCloud();
-                }
-            }
-        }
-        function deletePurchase(pId) {
-            if(confirm("Delete stock entry? Qty will be deducted from inventory.")) {
-                const entry = app.purchases.find(p => p.id === pId);
-                if(entry) {
-                    const item = app.inventory.find(i => i.id === entry.itemId);
-                    if(item) item.qty -= parseInt(entry.qty);
-                    app.purchases = app.purchases.filter(p => p.id !== pId);
-                    saveToCloud();
-                }
-            }
-        }
-        function resetForm() { document.getElementById('add-item-form').reset(); document.getElementById('item-loc').selectedIndex = 0; document.getElementById('cancel-btn').style.display = 'none'; }
-        function wipeData() { if(confirm("Delete ALL data?")) { app = { inventory: [], sales: [], purchases: [], loans: [] }; saveToCloud(); } }
-        function exportCSV() { let csv = "Type,Dim,Thick,Len,Loc,Price,Qty,Total\n" + app.inventory.map(i => `${i.type},${i.dimensions},${i.thickness},${i.length},${i.location},${i.price},${i.qty},${i.price*i.qty}`).join('\n'); const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], {type:'text/csv'})); a.download = 'Stock.csv'; a.click(); }
-
-        function printReceipt(id) {
-            const s = app.sales.find(x => x.id == id); if(!s) return;
-            const html = `<div class="receipt-box"><div style="text-align:center; border-bottom:1px dashed black; margin-bottom:10px;"><b>BIRHAN STEEL</b><br>RECEIPT</div>Date: ${s.date}<br>Client: ${s.customer||'Walk-in'}<table style="width:100%; margin-top:10px; border-top:1px dashed black;"><tr><td>${getItemName(s.itemId)}</td><td>x${s.qty}</td><td style="text-align:right;">${formatMoney(s.total)}</td></tr></table><div style="text-align:right; margin-top:10px; border-top:1px dashed black;"><b>TOTAL: ${formatMoney(s.total)}</b></div></div>`;
-            document.getElementById('print-area').innerHTML = html; window.print();
-        }
-        function printDailyReport(date) {
-            const sales = app.sales.filter(s => s.date === date);
-            const total = sales.reduce((sum,s) => sum+s.total, 0);
-            const html = `<div class="report-box"><div class="report-header"><h2>BIRHAN STEEL</h2><h3>Daily Sales Report: ${date}</h3></div><table class="report-table"><thead><tr><th>Client</th><th>Item</th><th>Qty</th><th>Total</th></tr></thead><tbody>${sales.map(s => `<tr><td>${s.customer||'-'}</td><td>${getItemName(s.itemId)}</td><td>${s.qty}</td><td>${formatMoney(s.total)}</td></tr>`).join('')}</tbody></table><h3 style="text-align:right;">Total: ${formatMoney(total)}</h3></div>`;
-            document.getElementById('print-area').innerHTML = html; window.print();
-        }
-        function printDailyPurchaseReport(date) {
-            const entries = app.purchases.filter(p => p.date === date);
-            const html = `<div class="report-box"><div class="report-header"><h2>BIRHAN STEEL</h2><h3>Daily Stock Entry Report: ${date}</h3></div><table class="report-table"><thead><tr><th>Supplier</th><th>Item</th><th>Qty Added</th></tr></thead><tbody>${entries.map(p => `<tr><td>${p.supplier||'-'}</td><td>${getItemName(p.itemId)}</td><td>${p.qty}</td></tr>`).join('')}</tbody></table></div>`;
-            document.getElementById('print-area').innerHTML = html; window.print();
-        }
-        function printStockReport() {
-            const date = new Date().toLocaleDateString();
-            let totalVal = 0;
-            const types = [...new Set(app.inventory.map(i => i.type))].sort();
-            let rows = types.map(t => {
-                const items = app.inventory.filter(i => i.type === t);
-                return `<tr class="report-group-row"><td colspan="5">📂 ${t}</td></tr>` + items.map(i => {
-                    const val = i.price * i.qty; totalVal += val;
-                    return `<tr><td>${i.dimensions} (${i.thickness})</td><td>${i.location}</td><td>${formatMoney(i.price)}</td><td>${i.qty}</td><td style="text-align:right;">${formatMoney(val)}</td></tr>`;
-                }).join('');
-            }).join('');
-            document.getElementById('print-area').innerHTML = `<div class="report-box"><div class="report-header"><h2>BIRHAN STEEL</h2><h3>Current Stock Report</h3><p>Generated: ${date}</p></div><table class="report-table"><thead><tr><th>Product</th><th>Location</th><th>Unit Price</th><th>Qty</th><th>Total Value</th></tr></thead><tbody>${rows}</tbody><tfoot><tr><td colspan="4" style="text-align:right; font-weight:bold;">GRAND TOTAL:</td><td style="text-align:right; font-weight:bold;">${formatMoney(totalVal)}</td></tr></tfoot></table></div>`;
-            window.print();
-        }
-
-        function printWorkerStockReport() {
-            const date = new Date().toLocaleDateString();
-            const types = [...new Set(app.inventory.map(i => i.type))].sort();
-            let rows = types.map(t => {
-                const items = app.inventory.filter(i => i.type === t);
-                return `<tr class="report-group-row"><td colspan="3">📂 ${t}</td></tr>` + items.map(i => {
-                    return `<tr><td>${i.dimensions} (${i.thickness})</td><td>${i.location}</td><td>${i.qty}</td></tr>`;
-                }).join('');
-            }).join('');
-            document.getElementById('print-area').innerHTML = `<div class="report-box"><div class="report-header"><h2>BIRHAN STEEL</h2><h3>Current Stock Report (Worker)</h3><p>Generated: ${date}</p></div><table class="report-table"><thead><tr><th>Product</th><th>Location</th><th>Qty</th></tr></thead><tbody>${rows}</tbody></table></div>`;
-            window.print();
-        }
-
-        setDates();
-    </script>
-</body>
-</html>
+            const groups
