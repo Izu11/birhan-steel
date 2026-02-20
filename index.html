@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -231,8 +232,8 @@
         </div>
         <div class="nav-items">
             <button class="nav-btn active" onclick="switchTab('inventory')">📦 Stock</button>
-            <button class="nav-btn" onclick="switchTab('sales')">💰 Sell</button>
-            <button class="nav-btn" onclick="switchTab('purchases')">📥 Buy</button>
+            <button class="nav-btn" onclick="switchTab('sales')">💰 Sales</button>
+            <button class="nav-btn" onclick="switchTab('purchases')">📥 Entry</button>
             <button class="nav-btn" onclick="switchTab('worker-reports')">📋 Report (Worker)</button>
 
             <button class="nav-btn" id="btn-admin-login" onclick="unlockAdmin()">🔐 Admin Login</button>
@@ -333,7 +334,7 @@
                 <div style="display: flex; gap: 10px;">
                     <input type="text" id="searchSales" class="form-control" placeholder="Search Customer..." style="width:200px;" onkeyup="renderSalesHistory()">
                     <input type="date" id="filter-sales-date" class="form-control" style="width:150px;">
-                    <button class="btn btn-outline" onclick="printFilteredSalesReport()">🖨️ Print By Date</button>
+                    <button class="btn btn-outline" onclick="printFilteredSalesHistory()">🖨️ Print By Date</button>
                 </div>
             </div>
             <div id="sales-history-container"></div>
@@ -359,7 +360,13 @@
                     <button type="submit" class="btn btn-primary" style="width:100%;">Add Stock</button>
                 </form>
             </div>
-            <div class="flex-between"><h2>Stock Entry History</h2></div>
+            <div class="flex-between">
+                <h2>Stock Entry History</h2>
+                <div style="display: flex; gap: 10px;">
+                    <input type="date" id="filter-purch-date" class="form-control" style="width:150px;">
+                    <button class="btn btn-outline" onclick="printFilteredPurchaseHistory()">🖨️ Print By Date</button>
+                </div>
+            </div>
             <div id="purchase-history-container"></div>
         </section>
 
@@ -508,6 +515,7 @@
             document.getElementById('purch-date').value = today; 
             document.getElementById('loan-date').value = today; 
             document.getElementById('filter-sales-date').value = today;
+            document.getElementById('filter-purch-date').value = today;
         }
 
         function unlockAdmin() {
@@ -630,7 +638,7 @@
             const groups = {}; app.purchases.forEach(p => { if(!groups[p.date]) groups[p.date] = []; groups[p.date].push(p); });
             const dates = Object.keys(groups).sort().reverse();
             document.getElementById('purchase-history-container').innerHTML = dates.map(date => `
-                <div class="panel" style="padding:0; overflow:hidden; margin-bottom:20px;"><div style="background:#f8fafc; padding:15px; display:flex; justify-content:space-between;"><b>📅 ${date}</b><button class="btn btn-outline btn-sm" onclick="printDailyPurchaseReport('${date}')">🖨️ Report</button></div><div class="table-container"><table><thead><tr><th>Supplier</th><th>Item</th><th>Qty Added</th><th></th></tr></thead><tbody>${groups[date].map(p => `<tr><td>${p.supplier||'-'}</td><td>${getItemName(p.itemId)}</td><td>${p.qty}</td><td><button class="btn btn-danger btn-sm" onclick="deletePurchase('${p.id}')">Delete</button></td></tr>`).join('')}</tbody></table></div></div>
+                <div class="panel" style="padding:0; overflow:hidden; margin-bottom:20px;"><div style="background:#f8fafc; padding:15px; display:flex; justify-content:space-between;"><b>📅 ${date}</b></div><div class="table-container"><table><thead><tr><th>Supplier</th><th>Item</th><th>Qty Added</th><th></th></tr></thead><tbody>${groups[date].map(p => `<tr><td>${p.supplier||'-'}</td><td>${getItemName(p.itemId)}</td><td>${p.qty}</td><td><button class="btn btn-danger btn-sm" onclick="deletePurchase('${p.id}')">Delete</button></td></tr>`).join('')}</tbody></table></div></div>
             `).join('') || '<div style="padding:20px;">No entries found.</div>';
         }
 
@@ -911,7 +919,7 @@
             document.getElementById('print-area').innerHTML = html; window.print();
         }
         
-        function printFilteredSalesReport() {
+        function printFilteredSalesHistory() {
             const filterDate = document.getElementById('filter-sales-date').value;
             if (!filterDate) {
                 alert("Please select a date to print.");
@@ -929,17 +937,23 @@
             document.getElementById('print-area').innerHTML = html; window.print();
         }
         
-        function printDailyReport(date) {
-            const sales = app.sales.filter(s => s.date === date);
-            const total = sales.reduce((sum,s) => sum+s.total, 0);
-            const html = `<div class="report-box"><div class="report-header"><h2>BIRHAN STEEL</h2><h3>Daily Sales Report: ${date}</h3></div><table class="report-table"><thead><tr><th>Client</th><th>Item</th><th>Qty</th><th>Total</th></tr></thead><tbody>${sales.map(s => `<tr><td>${s.customer||'-'}</td><td>${getItemName(s.itemId)}</td><td>${s.qty}</td><td>${formatMoney(s.total)}</td></tr>`).join('')}</tbody></table><h3 style="text-align:right;">Total: ${formatMoney(total)}</h3></div>`;
+        function printFilteredPurchaseHistory() {
+            const filterDate = document.getElementById('filter-purch-date').value;
+            if (!filterDate) {
+                alert("Please select a date to print.");
+                return;
+            }
+            
+            const entries = app.purchases.filter(p => p.date === filterDate);
+            if (entries.length === 0) {
+                alert("No entries found for this date.");
+                return;
+            }
+            
+            const html = `<div class="report-box"><div class="report-header"><h2>BIRHAN STEEL</h2><h3>Daily Stock Entry Report: ${filterDate}</h3></div><table class="report-table"><thead><tr><th>Supplier</th><th>Item</th><th>Qty Added</th></tr></thead><tbody>${entries.map(p => `<tr><td>${p.supplier||'-'}</td><td>${getItemName(p.itemId)}</td><td>${p.qty}</td></tr>`).join('')}</tbody></table></div>`;
             document.getElementById('print-area').innerHTML = html; window.print();
         }
-        function printDailyPurchaseReport(date) {
-            const entries = app.purchases.filter(p => p.date === date);
-            const html = `<div class="report-box"><div class="report-header"><h2>BIRHAN STEEL</h2><h3>Daily Stock Entry Report: ${date}</h3></div><table class="report-table"><thead><tr><th>Supplier</th><th>Item</th><th>Qty Added</th></tr></thead><tbody>${entries.map(p => `<tr><td>${p.supplier||'-'}</td><td>${getItemName(p.itemId)}</td><td>${p.qty}</td></tr>`).join('')}</tbody></table></div>`;
-            document.getElementById('print-area').innerHTML = html; window.print();
-        }
+
         function printStockReport() {
             const date = new Date().toLocaleDateString();
             let totalVal = 0;
@@ -984,4 +998,3 @@
     </script>
 </body>
 </html>
-
