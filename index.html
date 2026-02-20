@@ -433,9 +433,10 @@
 
     <script>
         // ==========================================
-        // ADMIN SECURITY PIN
+        // ADMIN SECURITY PINS
         // ==========================================
         const ADMIN_PIN = "2026"; 
+        const SETTINGS_PIN = "1996";
         let isAdminUnlocked = false;
         
         // ==========================================
@@ -497,7 +498,7 @@
         function unlockAdmin() {
             if (!isAdminUnlocked) {
                 const enteredPin = prompt("Admin Access Required. Enter PIN:");
-                if (enteredPin === ADMIN_PIN) {
+                if (enteredPin === ADMIN_PIN || enteredPin === SETTINGS_PIN) {
                     isAdminUnlocked = true;
                     document.getElementById('btn-admin-login').style.display = 'none';
                     document.querySelectorAll('.admin-only').forEach(btn => {
@@ -511,15 +512,19 @@
         }
         
         function switchTab(id) { 
-            const protectedTabs = ['dashboard', 'loans', 'settings', 'reports'];
+            const protectedTabs = ['dashboard', 'loans', 'reports'];
 
             if (protectedTabs.includes(id) && !isAdminUnlocked) {
-                const enteredPin = prompt("Admin Access Required. Enter PIN:");
-                if (enteredPin === ADMIN_PIN) {
-                    isAdminUnlocked = true; 
-                } else {
-                    alert("Incorrect PIN. Access Denied.");
-                    return; 
+                alert("Access Denied.");
+                return; 
+            }
+
+            // SPECIFIC CHECK FOR SETTINGS TAB
+            if (id === 'settings') {
+                const settingsAttempt = prompt("Settings Access Required. Enter Settings PIN:");
+                if (settingsAttempt !== SETTINGS_PIN) {
+                    alert("Incorrect Settings PIN. Access Denied.");
+                    return;
                 }
             }
 
