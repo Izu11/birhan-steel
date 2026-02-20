@@ -161,6 +161,8 @@
         .form-group { margin-bottom: 20px; }
         .form-group label { display: block; margin-bottom: 8px; font-weight: 600; font-size: 0.9rem; color: var(--text-main); }
         .form-control { width: 100%; padding: 12px 16px; border: 2px solid var(--border); border-radius: 8px; font-size: 1rem; background: #f8fafc; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        
         .btn { padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-size: 0.95rem; font-weight: 600; transition: transform 0.1s; }
         .btn:active { transform: scale(0.98); }
         .btn-primary { background: var(--accent); color: white; }
@@ -314,11 +316,16 @@
                         <div class="form-group"><label>Date</label><input type="date" id="sale-date" class="form-control" required></div>
                         <div class="form-group"><label>Customer</label><input type="text" id="sale-customer" class="form-control"></div>
                     </div>
-                    <div class="form-row">
-                        <div class="form-group"><label>Product</label><select id="sale-item" class="form-control" required></select></div>
-                        <div class="form-group"><label>Qty</label><input type="number" id="sale-qty" class="form-control" required min="1"></div>
+                    
+                    <div id="sales-items-container">
+                        <div class="form-row sale-item-row">
+                            <div class="form-group"><label>Product</label><select class="form-control sale-item-select" required></select></div>
+                            <div class="form-group"><label>Qty</label><input type="number" class="form-control sale-item-qty" required min="1"></div>
+                        </div>
                     </div>
-                    <button type="submit" class="btn btn-success" style="width:100%; margin-top:10px;">Confirm Sale</button>
+                    
+                    <button type="button" class="btn btn-outline btn-sm" onclick="addSaleRow()" style="margin-bottom:15px; width:100%; border: 2px dashed var(--border);">+ Add Another Product</button>
+                    <button type="submit" class="btn btn-success" style="width:100%;">Confirm Sale</button>
                 </form>
             </div>
             <div class="flex-between">
@@ -336,13 +343,20 @@
             <h1>Stock Entry</h1>
             <div class="panel">
                 <form id="purchase-form">
-                    <div class="form-group"><label>Date</label><input type="date" id="purch-date" class="form-control" required></div>
-                    <div class="form-group"><label>Product</label><select id="purch-item" class="form-control" required></select></div>
                     <div class="form-row">
-                        <div class="form-group"><label>Qty Added</label><input type="number" id="purch-qty" class="form-control" required></div>
+                        <div class="form-group"><label>Date</label><input type="date" id="purch-date" class="form-control" required></div>
                         <div class="form-group"><label>Supplier</label><input type="text" id="purch-supp" class="form-control"></div>
                     </div>
-                    <button type="submit" class="btn btn-primary">Add Stock</button>
+                    
+                    <div id="purchases-items-container">
+                        <div class="form-row purch-item-row">
+                            <div class="form-group"><label>Product</label><select class="form-control purch-item-select" required></select></div>
+                            <div class="form-group"><label>Qty Added</label><input type="number" class="form-control purch-item-qty" required min="1"></div>
+                        </div>
+                    </div>
+                    
+                    <button type="button" class="btn btn-outline btn-sm" onclick="addPurchaseRow()" style="margin-bottom:15px; width:100%; border: 2px dashed var(--border);">+ Add Another Product</button>
+                    <button type="submit" class="btn btn-primary" style="width:100%;">Add Stock</button>
                 </form>
             </div>
             <div class="flex-between"><h2>Stock Entry History</h2></div>
@@ -429,6 +443,9 @@
         // SAFETY LOCK: Prevents overwriting database
         // ==========================================
         let isDataSynced = false; 
+        
+        // GLOBAL VARIABLE FOR DROPDOWNS
+        window.dropdownOpts = ""; 
 
         const firebaseConfig = {
           apiKey: "AIzaSyAdpvuUAGnj2ixxAdjbhntd775V5FEVH9M",
@@ -520,6 +537,23 @@
         
         function formatMoney(n) { return 'ETB ' + parseFloat(n).toLocaleString('en-ET', {minimumFractionDigits:2}); }
         function getItemName(id) { const i = app.inventory.find(x => x.id == id); return i ? `${i.type} ${i.dimensions} (${i.thickness})` : 'Unknown'; }
+
+        // --- NEW MULTI-ROW FUNCTIONS ---
+        function addSaleRow() {
+            const container = document.getElementById('sales-items-container');
+            const row = document.createElement('div');
+            row.className = 'form-row sale-item-row';
+            row.innerHTML = `<div class="form-group"><label>Product</label><select class="form-control sale-item-select" required>${window.dropdownOpts}</select></div><div class="form-group"><label>Qty</label><input type="number" class="form-control sale-item-qty" required min="1"></div>`;
+            container.appendChild(row);
+        }
+
+        function addPurchaseRow() {
+            const container = document.getElementById('purchases-items-container');
+            const row = document.createElement('div');
+            row.className = 'form-row purch-item-row';
+            row.innerHTML = `<div class="form-group"><label>Product</label><select class="form-control purch-item-select" required>${window.dropdownOpts}</select></div><div class="form-group"><label>Qty Added</label><input type="number" class="form-control purch-item-qty" required min="1"></div>`;
+            container.appendChild(row);
+        }
 
         function renderDashboard() {
             const valCam = app.inventory.filter(i => i.location === 'Cambridge').reduce((sum, i) => sum + (i.price * i.qty), 0);
@@ -619,16 +653,98 @@
             saveToCloud(); resetForm();
         });
 
+        // --- MULTI-ITEM SALES SUBMIT ---
         document.getElementById('sales-form').addEventListener('submit', e => {
             e.preventDefault();
-            const id = document.getElementById('sale-item').value; const qty = parseInt(document.getElementById('sale-qty').value); const item = app.inventory.find(i => i.id == id);
-            if(item && item.qty >= qty) { item.qty -= qty; const saleId = Date.now().toString(); app.sales.push({ id: saleId, date: document.getElementById('sale-date').value, itemId: id, qty, customer: document.getElementById('sale-customer').value, total: qty*item.price, priceAtSale: item.price }); saveToCloud(); if(confirm("Sale Recorded! Print Receipt?")) printReceipt(saleId); e.target.reset(); setDates(); } else { alert("Low Stock!"); }
+            const date = document.getElementById('sale-date').value;
+            const customer = document.getElementById('sale-customer').value;
+            const rows = document.querySelectorAll('.sale-item-row');
+            
+            let allValid = true;
+            let itemsToProcess = [];
+            
+            rows.forEach(row => {
+                const id = row.querySelector('.sale-item-select').value;
+                const qty = parseInt(row.querySelector('.sale-item-qty').value);
+                if(!id || isNaN(qty)) return;
+                
+                const item = app.inventory.find(i => i.id == id);
+                if(item && item.qty >= qty) {
+                    itemsToProcess.push({ item, qty, id });
+                } else {
+                    allValid = false;
+                    alert(`Not enough stock for ${item ? item.dimensions : 'selected item'}!`);
+                }
+            });
+            
+            if(allValid && itemsToProcess.length > 0) {
+                itemsToProcess.forEach((p, index) => {
+                    p.item.qty -= p.qty;
+                    app.sales.push({ 
+                        id: Date.now().toString() + index, 
+                        date: date, 
+                        itemId: p.id, 
+                        qty: p.qty, 
+                        customer: customer, 
+                        total: p.qty * p.item.price, 
+                        priceAtSale: p.item.price 
+                    });
+                });
+                
+                saveToCloud(); 
+                alert("Sales Recorded! View 'Sales History' to print full invoice."); 
+                e.target.reset(); 
+                
+                // Reset to single row
+                document.getElementById('sales-items-container').innerHTML = `
+                    <div class="form-row sale-item-row">
+                        <div class="form-group"><label>Product</label><select class="form-control sale-item-select" required>${window.dropdownOpts}</select></div>
+                        <div class="form-group"><label>Qty</label><input type="number" class="form-control sale-item-qty" required min="1"></div>
+                    </div>`;
+                setDates(); 
+            }
         });
 
+        // --- MULTI-ITEM PURCHASES SUBMIT ---
         document.getElementById('purchase-form').addEventListener('submit', e => {
             e.preventDefault(); 
-            const id = document.getElementById('purch-item').value; const qty = parseInt(document.getElementById('purch-qty').value); const item = app.inventory.find(i => i.id == id);
-            if(item) { item.qty += qty; app.purchases.push({ id: Date.now().toString(), date: document.getElementById('purch-date').value, itemId: id, qty, supplier: document.getElementById('purch-supp').value }); saveToCloud(); alert("Stock Added!"); e.target.reset(); setDates(); }
+            const date = document.getElementById('purch-date').value;
+            const supplier = document.getElementById('purch-supp').value;
+            const rows = document.querySelectorAll('.purch-item-row');
+            
+            let processed = 0;
+            rows.forEach((row, index) => {
+                const id = row.querySelector('.purch-item-select').value;
+                const qty = parseInt(row.querySelector('.purch-item-qty').value);
+                if(!id || isNaN(qty)) return;
+                
+                const item = app.inventory.find(i => i.id == id);
+                if(item) { 
+                    item.qty += qty; 
+                    app.purchases.push({ 
+                        id: Date.now().toString() + index, 
+                        date: date, 
+                        itemId: id, 
+                        qty, 
+                        supplier: supplier 
+                    }); 
+                    processed++;
+                }
+            });
+            
+            if(processed > 0) {
+                saveToCloud(); 
+                alert("Stock Added!"); 
+                e.target.reset(); 
+                
+                // Reset to single row
+                document.getElementById('purchases-items-container').innerHTML = `
+                    <div class="form-row purch-item-row">
+                        <div class="form-group"><label>Product</label><select class="form-control purch-item-select" required>${window.dropdownOpts}</select></div>
+                        <div class="form-group"><label>Qty Added</label><input type="number" class="form-control purch-item-qty" required min="1"></div>
+                    </div>`;
+                setDates();
+            }
         });
 
         document.getElementById('loan-form').addEventListener('submit', e => {
@@ -658,9 +774,14 @@
 
         function refresh() {
             renderDashboard(); renderInventory(); renderSalesHistory(); renderPurchaseHistory();
-            // THIS IS THE ONLY LINE CHANGED: Added (${i.thickness}) to the dropdown maps.
-            const opts = `<option value="">-- Select --</option>` + app.inventory.map(i => `<option value="${i.id}">${i.type} ${i.dimensions} (${i.thickness}) - ${i.location} (${i.qty})</option>`).join('');
-            document.getElementById('sale-item').innerHTML = opts; document.getElementById('purch-item').innerHTML = opts;
+            
+            window.dropdownOpts = `<option value="">-- Select --</option>` + app.inventory.map(i => `<option value="${i.id}">${i.type} ${i.dimensions} (${i.thickness}) - ${i.location} (${i.qty})</option>`).join('');
+            
+            document.querySelectorAll('.sale-item-select, .purch-item-select').forEach(el => {
+                const currentVal = el.value;
+                el.innerHTML = window.dropdownOpts;
+                el.value = currentVal;
+            });
             
             // ADMIN REPORT (With Money & Profit)
             let totalVal = 0;
