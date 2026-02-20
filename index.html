@@ -116,7 +116,7 @@
                 padding-top: 0; 
                 overflow-x: auto; 
                 border-top: 1px solid #475569;
-                scrollbar-width: none; /* Hide scrollbar for clean look */
+                scrollbar-width: none; 
             }
             .nav-items::-webkit-scrollbar { display: none; }
             .nav-btn { 
@@ -292,7 +292,7 @@
                     </div>
                     
                     <div class="form-row">
-                        <div class="form-group"><label>Purchase Price (ETB)</label><input type="number" id="item-purch-price" step="0.01" class="form-control" required placeholder="Cost from supplier"></div>
+                        <div class="form-group"><label>Purchase Price (ETB) - <span style="font-weight:normal; font-size:0.8rem; color:var(--text-muted);">Optional</span></label><input type="number" id="item-purch-price" step="0.01" class="form-control" placeholder="Cost from supplier"></div>
                         <div class="form-group"><label>Selling Price (ETB)</label><input type="number" id="item-price" step="0.01" class="form-control" required placeholder="Price for customer"></div>
                     </div>
                     
@@ -415,6 +415,7 @@
     <script>
         // ==========================================
         // ADMIN SECURITY PIN
+        // Change this number to set your custom password!
         // ==========================================
         const ADMIN_PIN = "2026"; 
         let isAdminUnlocked = false;
@@ -570,7 +571,7 @@
             const groups = {}; app.purchases.forEach(p => { if(!groups[p.date]) groups[p.date] = []; groups[p.date].push(p); });
             const dates = Object.keys(groups).sort().reverse();
             document.getElementById('purchase-history-container').innerHTML = dates.map(date => `
-                <div class="panel" style="padding:0; overflow:hidden; margin-bottom:20px;"><div style="background:#f8fafc; padding:15px; display:flex; justify-content:space-between;"><b>📅 ${date}</b><button class="btn btn-outline btn-sm" onclick="printDailyPurchaseReport('${date}')">🖨️ Report</button></div><div class="table-container"><table><thead><tr><th>Supplier</th><th>Item</th><th>Purchase Price</th><th>Qty Added</th><th></th></tr></thead><tbody>${groups[date].map(p => `<tr><td>${p.supplier||'-'}</td><td>${getItemName(p.itemId)}</td><td>${formatMoney(p.purchasePrice || 0)}</td><td>${p.qty}</td><td><button class="btn btn-danger btn-sm" onclick="deletePurchase('${p.id}')">Delete</button></td></tr>`).join('')}</tbody></table></div></div>
+                <div class="panel" style="padding:0; overflow:hidden; margin-bottom:20px;"><div style="background:#f8fafc; padding:15px; display:flex; justify-content:space-between;"><b>📅 ${date}</b><button class="btn btn-outline btn-sm" onclick="printDailyPurchaseReport('${date}')">🖨️ Report</button></div><div class="table-container"><table><thead><tr><th>Supplier</th><th>Item</th><th>Qty Added</th><th></th></tr></thead><tbody>${groups[date].map(p => `<tr><td>${p.supplier||'-'}</td><td>${getItemName(p.itemId)}</td><td>${p.qty}</td><td><button class="btn btn-danger btn-sm" onclick="deletePurchase('${p.id}')">Delete</button></td></tr>`).join('')}</tbody></table></div></div>
             `).join('') || '<div style="padding:20px;">No entries found.</div>';
         }
 
@@ -581,7 +582,7 @@
             document.getElementById('item-dim').value = item.dimensions; 
             document.getElementById('item-thick').value = item.thickness; 
             document.getElementById('item-len').value = item.length; 
-            document.getElementById('item-purch-price').value = item.purchPrice || 0; 
+            document.getElementById('item-purch-price').value = item.purchPrice || ''; 
             document.getElementById('item-price').value = item.price; 
             document.getElementById('item-qty').value = 0; 
             document.getElementById('item-loc').value = item.location;
@@ -603,9 +604,12 @@
             if(exist) { 
                 exist.qty += qty; 
                 exist.price = price; 
-                exist.purchPrice = purchPrice; 
+                // Only update purchase price if a new one was provided, otherwise keep old
+                if(!isNaN(purchPrice)) {
+                    exist.purchPrice = purchPrice; 
+                }
             } else { 
-                app.inventory.push({ id: Date.now().toString(), type, dimensions: dim, thickness: thick, length: len, purchPrice, price, qty, location: loc }); 
+                app.inventory.push({ id: Date.now().toString(), type, dimensions: dim, thickness: thick, length: len, purchPrice: (isNaN(purchPrice) ? 0 : purchPrice), price, qty, location: loc }); 
             }
             saveToCloud(); resetForm();
         });
@@ -618,8 +622,20 @@
 
         document.getElementById('purchase-form').addEventListener('submit', e => {
             e.preventDefault(); 
-            const id = document.getElementById('purch-item').value; const qty = parseInt(document.getElementById('purch-qty').value); const item = app.inventory.find(i => i.id == id);
-            if(item) { item.qty += qty; app.purchases.push({ id: Date.now().toString(), date: document.getElementById('purch-date').value, itemId: id, qty, supplier: document.getElementById('purch-supp').value }); saveToCloud(); alert("Stock Added!"); e.target.reset(); setDates(); }
+            const id = document.getElementById('purch-item').value; 
+            const qty = parseInt(document.getElementById('purch-qty').value); 
+            const item = app.inventory.find(i => i.id == id);
+            if(item) { 
+                item.qty += qty; 
+                app.purchases.push({ 
+                    id: Date.now().toString(), 
+                    date: document.getElementById('purch-date').value, 
+                    itemId: id, 
+                    qty, 
+                    supplier: document.getElementById('purch-supp').value 
+                }); 
+                saveToCloud(); alert("Stock Added!"); e.target.reset(); setDates(); 
+            }
         });
 
         document.getElementById('loan-form').addEventListener('submit', e => {
@@ -652,7 +668,7 @@
             const opts = `<option value="">-- Select --</option>` + app.inventory.map(i => `<option value="${i.id}">${i.type} ${i.dimensions} - ${i.location} (${i.qty})</option>`).join('');
             document.getElementById('sale-item').innerHTML = opts; document.getElementById('purch-item').innerHTML = opts;
             
-            // ADMIN REPORT (With Money & Profit)
+            // ADMIN REPORT (With Money & Expected Profit)
             let totalVal = 0;
             let totalProfit = 0;
             
