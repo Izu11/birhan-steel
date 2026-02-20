@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -334,7 +333,7 @@
                 <div style="display: flex; gap: 10px;">
                     <input type="text" id="searchSales" class="form-control" placeholder="Search Customer..." style="width:200px;" onkeyup="renderSalesHistory()">
                     <input type="date" id="filter-sales-date" class="form-control" style="width:150px;">
-                    <button class="btn btn-outline" onclick="printFilteredSalesHistory()">🖨️ Print By Date</button>
+                    <button class="btn btn-outline" onclick="printFilteredSalesReport()">🖨️ Print By Date</button>
                 </div>
             </div>
             <div id="sales-history-container"></div>
@@ -628,17 +627,50 @@
             const filtered = app.sales.filter(s => (s.customer||'').toLowerCase().includes(search));
             const groups = {}; filtered.forEach(s => { if(!groups[s.date]) groups[s.date] = []; groups[s.date].push(s); });
             const dates = Object.keys(groups).sort().reverse();
+            // NEW: Added group-header and group-details logic for collapsible history
             document.getElementById('sales-history-container').innerHTML = dates.map(date => {
                 const total = groups[date].reduce((sum, s) => sum + s.total, 0);
-                return `<div class="panel" style="padding:0; overflow:hidden; margin-bottom:20px;"><div style="background:#f8fafc; padding:15px; display:flex; justify-content:space-between;"><b>📅 ${date}</b><span style="color:var(--success); font-weight:bold;">Total: ${formatMoney(total)}</span></div><div class="table-container"><table><thead><tr><th>Client</th><th>Item</th><th>Qty</th><th>Total</th><th></th></tr></thead><tbody>${groups[date].map(s => `<tr><td>${s.customer||'-'}</td><td>${getItemName(s.itemId)}</td><td>${s.qty}</td><td>${formatMoney(s.total)}</td><td style="display:flex; gap:5px;"><button class="btn btn-primary btn-sm" onclick="printReceipt('${s.id}')">Print</button><button class="btn btn-danger btn-sm" onclick="deleteSale('${s.id}')">Delete</button></td></tr>`).join('')}</tbody></table></div></div>`;
+                return `
+                <div class="panel" style="padding:0; overflow:hidden; margin-bottom:20px;">
+                    <div class="group-header" onclick="this.nextElementSibling.classList.toggle('open')">
+                        <div><b>📅 ${date}</b></div>
+                        <div style="color:var(--success); font-weight:bold;">Total: ${formatMoney(total)} ▼</div>
+                    </div>
+                    <div class="group-details">
+                        <div class="table-container">
+                            <table>
+                                <thead><tr><th>Client</th><th>Item</th><th>Qty</th><th>Total</th><th></th></tr></thead>
+                                <tbody>
+                                    ${groups[date].map(s => `<tr><td>${s.customer||'-'}</td><td>${getItemName(s.itemId)}</td><td>${s.qty}</td><td>${formatMoney(s.total)}</td><td style="display:flex; gap:5px;"><button class="btn btn-primary btn-sm" onclick="printReceipt('${s.id}')">Print</button><button class="btn btn-danger btn-sm" onclick="deleteSale('${s.id}')">Delete</button></td></tr>`).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>`;
             }).join('') || '<div style="padding:20px;">No sales found.</div>';
         }
 
         function renderPurchaseHistory() {
             const groups = {}; app.purchases.forEach(p => { if(!groups[p.date]) groups[p.date] = []; groups[p.date].push(p); });
             const dates = Object.keys(groups).sort().reverse();
+            // NEW: Added group-header and group-details logic for collapsible history
             document.getElementById('purchase-history-container').innerHTML = dates.map(date => `
-                <div class="panel" style="padding:0; overflow:hidden; margin-bottom:20px;"><div style="background:#f8fafc; padding:15px; display:flex; justify-content:space-between;"><b>📅 ${date}</b></div><div class="table-container"><table><thead><tr><th>Supplier</th><th>Item</th><th>Qty Added</th><th></th></tr></thead><tbody>${groups[date].map(p => `<tr><td>${p.supplier||'-'}</td><td>${getItemName(p.itemId)}</td><td>${p.qty}</td><td><button class="btn btn-danger btn-sm" onclick="deletePurchase('${p.id}')">Delete</button></td></tr>`).join('')}</tbody></table></div></div>
+                <div class="panel" style="padding:0; overflow:hidden; margin-bottom:20px;">
+                    <div class="group-header" onclick="this.nextElementSibling.classList.toggle('open')">
+                        <div><b>📅 ${date}</b></div>
+                        <div style="font-size:0.9rem;">${groups[date].length} Entries ▼</div>
+                    </div>
+                    <div class="group-details">
+                        <div class="table-container">
+                            <table>
+                                <thead><tr><th>Supplier</th><th>Item</th><th>Qty Added</th><th></th></tr></thead>
+                                <tbody>
+                                    ${groups[date].map(p => `<tr><td>${p.supplier||'-'}</td><td>${getItemName(p.itemId)}</td><td>${p.qty}</td><td><button class="btn btn-danger btn-sm" onclick="deletePurchase('${p.id}')">Delete</button></td></tr>`).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
             `).join('') || '<div style="padding:20px;">No entries found.</div>';
         }
 
@@ -919,7 +951,7 @@
             document.getElementById('print-area').innerHTML = html; window.print();
         }
         
-        function printFilteredSalesHistory() {
+        function printFilteredSalesReport() {
             const filterDate = document.getElementById('filter-sales-date').value;
             if (!filterDate) {
                 alert("Please select a date to print.");
@@ -937,23 +969,17 @@
             document.getElementById('print-area').innerHTML = html; window.print();
         }
         
-        function printFilteredPurchaseHistory() {
-            const filterDate = document.getElementById('filter-purch-date').value;
-            if (!filterDate) {
-                alert("Please select a date to print.");
-                return;
-            }
-            
-            const entries = app.purchases.filter(p => p.date === filterDate);
-            if (entries.length === 0) {
-                alert("No entries found for this date.");
-                return;
-            }
-            
-            const html = `<div class="report-box"><div class="report-header"><h2>BIRHAN STEEL</h2><h3>Daily Stock Entry Report: ${filterDate}</h3></div><table class="report-table"><thead><tr><th>Supplier</th><th>Item</th><th>Qty Added</th></tr></thead><tbody>${entries.map(p => `<tr><td>${p.supplier||'-'}</td><td>${getItemName(p.itemId)}</td><td>${p.qty}</td></tr>`).join('')}</tbody></table></div>`;
+        function printDailyReport(date) {
+            const sales = app.sales.filter(s => s.date === date);
+            const total = sales.reduce((sum,s) => sum+s.total, 0);
+            const html = `<div class="report-box"><div class="report-header"><h2>BIRHAN STEEL</h2><h3>Daily Sales Report: ${date}</h3></div><table class="report-table"><thead><tr><th>Client</th><th>Item</th><th>Qty</th><th>Total</th></tr></thead><tbody>${sales.map(s => `<tr><td>${s.customer||'-'}</td><td>${getItemName(s.itemId)}</td><td>${s.qty}</td><td>${formatMoney(s.total)}</td></tr>`).join('')}</tbody></table><h3 style="text-align:right;">Total: ${formatMoney(total)}</h3></div>`;
             document.getElementById('print-area').innerHTML = html; window.print();
         }
-
+        function printDailyPurchaseReport(date) {
+            const entries = app.purchases.filter(p => p.date === date);
+            const html = `<div class="report-box"><div class="report-header"><h2>BIRHAN STEEL</h2><h3>Daily Stock Entry Report: ${date}</h3></div><table class="report-table"><thead><tr><th>Supplier</th><th>Item</th><th>Qty Added</th></tr></thead><tbody>${entries.map(p => `<tr><td>${p.supplier||'-'}</td><td>${getItemName(p.itemId)}</td><td>${p.qty}</td></tr>`).join('')}</tbody></table></div>`;
+            document.getElementById('print-area').innerHTML = html; window.print();
+        }
         function printStockReport() {
             const date = new Date().toLocaleDateString();
             let totalVal = 0;
