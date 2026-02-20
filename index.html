@@ -434,7 +434,6 @@
     <script>
         // ==========================================
         // ADMIN SECURITY PIN
-        // Change this number to set your custom password!
         // ==========================================
         const ADMIN_PIN = "2026"; 
         let isAdminUnlocked = false;
@@ -787,7 +786,15 @@
             let totalVal = 0;
             let totalProfit = 0;
             
-            document.getElementById('report-table-body').innerHTML = app.inventory.map(i => {
+            const sortedForReport = [...app.inventory].sort((a,b) => {
+                let tc = (a.type||"").localeCompare(b.type||"");
+                if(tc !== 0) return tc;
+                let dc = (a.dimensions||"").localeCompare(b.dimensions||"", undefined, {numeric:true});
+                if(dc !== 0) return dc;
+                return (a.thickness||"").localeCompare(b.thickness||"", undefined, {numeric:true});
+            });
+            
+            document.getElementById('report-table-body').innerHTML = sortedForReport.map(i => {
                 const val = i.price * i.qty; 
                 const profit = (i.price - (i.purchPrice || 0)) * i.qty; 
                 totalVal += val;
@@ -800,7 +807,7 @@
             document.getElementById('report-total-profit').innerText = formatMoney(totalProfit);
 
             // WORKER REPORT (No Money)
-            document.getElementById('worker-report-table-body').innerHTML = app.inventory.map(i => {
+            document.getElementById('worker-report-table-body').innerHTML = sortedForReport.map(i => {
                 return `<tr><td>${i.type} ${i.dimensions} (${i.thickness})</td><td>${i.location}</td><td style="font-weight:bold;">${i.qty}</td></tr>`;
             }).join('');
         }
@@ -874,7 +881,11 @@
             let totalProfit = 0;
             const types = [...new Set(app.inventory.map(i => i.type))].sort();
             let rows = types.map(t => {
-                const items = app.inventory.filter(i => i.type === t);
+                const items = app.inventory.filter(i => i.type === t).sort((a, b) => {
+                    const dimCmp = (a.dimensions || "").localeCompare(b.dimensions || "", undefined, {numeric: true});
+                    if (dimCmp !== 0) return dimCmp;
+                    return (a.thickness || "").localeCompare(b.thickness || "", undefined, {numeric: true});
+                });
                 return `<tr class="report-group-row"><td colspan="7">📂 ${t}</td></tr>` + items.map(i => {
                     const val = i.price * i.qty; 
                     const profit = (i.price - (i.purchPrice || 0)) * i.qty;
@@ -891,7 +902,11 @@
             const date = new Date().toLocaleDateString();
             const types = [...new Set(app.inventory.map(i => i.type))].sort();
             let rows = types.map(t => {
-                const items = app.inventory.filter(i => i.type === t);
+                const items = app.inventory.filter(i => i.type === t).sort((a, b) => {
+                    const dimCmp = (a.dimensions || "").localeCompare(b.dimensions || "", undefined, {numeric: true});
+                    if (dimCmp !== 0) return dimCmp;
+                    return (a.thickness || "").localeCompare(b.thickness || "", undefined, {numeric: true});
+                });
                 return `<tr class="report-group-row"><td colspan="3">📂 ${t}</td></tr>` + items.map(i => {
                     return `<tr><td>${i.dimensions} (${i.thickness})</td><td>${i.location}</td><td>${i.qty}</td></tr>`;
                 }).join('');
