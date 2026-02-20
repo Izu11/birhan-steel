@@ -161,8 +161,6 @@
         .form-group { margin-bottom: 20px; }
         .form-group label { display: block; margin-bottom: 8px; font-weight: 600; font-size: 0.9rem; color: var(--text-main); }
         .form-control { width: 100%; padding: 12px 16px; border: 2px solid var(--border); border-radius: 8px; font-size: 1rem; background: #f8fafc; }
-        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        
         .btn { padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-size: 0.95rem; font-weight: 600; transition: transform 0.1s; }
         .btn:active { transform: scale(0.98); }
         .btn-primary { background: var(--accent); color: white; }
@@ -323,7 +321,14 @@
                     <button type="submit" class="btn btn-success" style="width:100%; margin-top:10px;">Confirm Sale</button>
                 </form>
             </div>
-            <div class="flex-between"><h2>Sales History</h2><input type="text" id="searchSales" class="form-control" placeholder="Search..." style="width:250px;" onkeyup="renderSalesHistory()"></div>
+            <div class="flex-between">
+                <h2>Sales History</h2>
+                <div style="display: flex; gap: 10px;">
+                    <input type="text" id="searchSales" class="form-control" placeholder="Search Customer..." style="width:200px;" onkeyup="renderSalesHistory()">
+                    <input type="date" id="filter-sales-date" class="form-control" style="width:150px;">
+                    <button class="btn btn-outline" onclick="printFilteredSalesReport()">🖨️ Print By Date</button>
+                </div>
+            </div>
             <div id="sales-history-container"></div>
         </section>
 
@@ -470,6 +475,7 @@
             document.getElementById('sale-date').value = today; 
             document.getElementById('purch-date').value = today; 
             document.getElementById('loan-date').value = today; 
+            document.getElementById('filter-sales-date').value = today;
         }
 
         function unlockAdmin() {
@@ -604,7 +610,6 @@
             if(exist) { 
                 exist.qty += qty; 
                 exist.price = price; 
-                // Only update purchase price if a new one was provided, otherwise keep old
                 if(!isNaN(purchPrice)) {
                     exist.purchPrice = purchPrice; 
                 }
@@ -622,20 +627,8 @@
 
         document.getElementById('purchase-form').addEventListener('submit', e => {
             e.preventDefault(); 
-            const id = document.getElementById('purch-item').value; 
-            const qty = parseInt(document.getElementById('purch-qty').value); 
-            const item = app.inventory.find(i => i.id == id);
-            if(item) { 
-                item.qty += qty; 
-                app.purchases.push({ 
-                    id: Date.now().toString(), 
-                    date: document.getElementById('purch-date').value, 
-                    itemId: id, 
-                    qty, 
-                    supplier: document.getElementById('purch-supp').value 
-                }); 
-                saveToCloud(); alert("Stock Added!"); e.target.reset(); setDates(); 
-            }
+            const id = document.getElementById('purch-item').value; const qty = parseInt(document.getElementById('purch-qty').value); const item = app.inventory.find(i => i.id == id);
+            if(item) { item.qty += qty; app.purchases.push({ id: Date.now().toString(), date: document.getElementById('purch-date').value, itemId: id, qty, supplier: document.getElementById('purch-supp').value }); saveToCloud(); alert("Stock Added!"); e.target.reset(); setDates(); }
         });
 
         document.getElementById('loan-form').addEventListener('submit', e => {
@@ -668,7 +661,7 @@
             const opts = `<option value="">-- Select --</option>` + app.inventory.map(i => `<option value="${i.id}">${i.type} ${i.dimensions} - ${i.location} (${i.qty})</option>`).join('');
             document.getElementById('sale-item').innerHTML = opts; document.getElementById('purch-item').innerHTML = opts;
             
-            // ADMIN REPORT (With Money & Expected Profit)
+            // ADMIN REPORT (With Money & Profit)
             let totalVal = 0;
             let totalProfit = 0;
             
@@ -722,6 +715,26 @@
             const html = `<div class="receipt-box"><div style="text-align:center; border-bottom:1px dashed black; margin-bottom:10px;"><b>BIRHAN STEEL</b><br>RECEIPT</div>Date: ${s.date}<br>Client: ${s.customer||'Walk-in'}<table style="width:100%; margin-top:10px; border-top:1px dashed black;"><tr><td>${getItemName(s.itemId)}</td><td>x${s.qty}</td><td style="text-align:right;">${formatMoney(s.total)}</td></tr></table><div style="text-align:right; margin-top:10px; border-top:1px dashed black;"><b>TOTAL: ${formatMoney(s.total)}</b></div></div>`;
             document.getElementById('print-area').innerHTML = html; window.print();
         }
+        
+        // NEW: Print filtered sales report by date
+        function printFilteredSalesReport() {
+            const filterDate = document.getElementById('filter-sales-date').value;
+            if (!filterDate) {
+                alert("Please select a date to print.");
+                return;
+            }
+            
+            const sales = app.sales.filter(s => s.date === filterDate);
+            if (sales.length === 0) {
+                alert("No sales found for this date.");
+                return;
+            }
+            
+            const total = sales.reduce((sum,s) => sum+s.total, 0);
+            const html = `<div class="report-box"><div class="report-header"><h2>BIRHAN STEEL</h2><h3>Daily Sales Report: ${filterDate}</h3></div><table class="report-table"><thead><tr><th>Client</th><th>Item</th><th>Qty</th><th>Total</th></tr></thead><tbody>${sales.map(s => `<tr><td>${s.customer||'-'}</td><td>${getItemName(s.itemId)}</td><td>${s.qty}</td><td>${formatMoney(s.total)}</td></tr>`).join('')}</tbody></table><h3 style="text-align:right;">Total: ${formatMoney(total)}</h3></div>`;
+            document.getElementById('print-area').innerHTML = html; window.print();
+        }
+        
         function printDailyReport(date) {
             const sales = app.sales.filter(s => s.date === date);
             const total = sales.reduce((sum,s) => sum+s.total, 0);
