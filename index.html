@@ -231,8 +231,8 @@
         </div>
         <div class="nav-items">
             <button class="nav-btn active" onclick="switchTab('inventory')">📦 Stock</button>
-            <button class="nav-btn" onclick="switchTab('sales')">💰 Sales</button>
-            <button class="nav-btn" onclick="switchTab('purchases')">📥 Entry</button>
+            <button class="nav-btn" onclick="switchTab('sales')">💰 Sell</button>
+            <button class="nav-btn" onclick="switchTab('purchases')">📥 Buy</button>
             <button class="nav-btn" onclick="switchTab('worker-reports')">📋 Report (Worker)</button>
 
             <button class="nav-btn" id="btn-admin-login" onclick="unlockAdmin()">🔐 Admin Login</button>
@@ -568,12 +568,14 @@
         function formatMoney(n) { return 'ETB ' + parseFloat(n).toLocaleString('en-ET', {minimumFractionDigits:2}); }
         function getItemName(id) { const i = app.inventory.find(x => x.id == id); return i ? `${i.type} ${i.dimensions} (${i.thickness})` : 'Unknown'; }
 
-        // --- NEW MULTI-ROW FUNCTIONS ---
+        // --- NEW MULTI-ROW FUNCTIONS WITH REMOVE BUTTONS ---
         function addSaleRow() {
             const container = document.getElementById('sales-items-container');
             const row = document.createElement('div');
             row.className = 'form-row sale-item-row';
-            row.innerHTML = `<div class="form-group"><label>Product</label><select class="form-control sale-item-select" required>${window.dropdownOpts}</select></div><div class="form-group"><label>Qty</label><input type="number" class="form-control sale-item-qty" required min="1"></div><div class="form-group" style="grid-column: 1 / -1;"><label>Custom Unit Price (Opt)</label><input type="number" step="0.01" class="form-control sale-item-price" placeholder="Leave blank to use default"></div>`;
+            row.style.borderTop = "2px dashed var(--border)";
+            row.style.paddingTop = "15px";
+            row.innerHTML = `<div class="form-group"><label>Product</label><select class="form-control sale-item-select" required>${window.dropdownOpts}</select></div><div class="form-group"><label>Qty</label><input type="number" class="form-control sale-item-qty" required min="1"></div><div class="form-group" style="grid-column: 1 / -1;"><label>Custom Unit Price (Opt)</label><input type="number" step="0.01" class="form-control sale-item-price" placeholder="Leave blank to use default"></div><div style="grid-column: 1 / -1; text-align: right; margin-top: -10px; margin-bottom: 10px;"><button type="button" class="btn btn-danger btn-sm" onclick="this.closest('.sale-item-row').remove()">❌ Remove</button></div>`;
             container.appendChild(row);
         }
 
@@ -581,7 +583,9 @@
             const container = document.getElementById('purchases-items-container');
             const row = document.createElement('div');
             row.className = 'form-row purch-item-row';
-            row.innerHTML = `<div class="form-group"><label>Product</label><select class="form-control purch-item-select" required>${window.dropdownOpts}</select></div><div class="form-group"><label>Qty Added</label><input type="number" class="form-control purch-item-qty" required min="1"></div><div class="form-group" style="grid-column: 1 / -1;"><label>New Purch. Price (Opt)</label><input type="number" step="0.01" class="form-control purch-item-price" placeholder="Leave blank to keep current cost"></div>`;
+            row.style.borderTop = "2px dashed var(--border)";
+            row.style.paddingTop = "15px";
+            row.innerHTML = `<div class="form-group"><label>Product</label><select class="form-control purch-item-select" required>${window.dropdownOpts}</select></div><div class="form-group"><label>Qty Added</label><input type="number" class="form-control purch-item-qty" required min="1"></div><div class="form-group" style="grid-column: 1 / -1;"><label>New Purch. Price (Opt)</label><input type="number" step="0.01" class="form-control purch-item-price" placeholder="Leave blank to keep current cost"></div><div style="grid-column: 1 / -1; text-align: right; margin-top: -10px; margin-bottom: 10px;"><button type="button" class="btn btn-danger btn-sm" onclick="this.closest('.purch-item-row').remove()">❌ Remove</button></div>`;
             container.appendChild(row);
         }
 
