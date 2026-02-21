@@ -321,6 +321,7 @@
                         <div class="form-row sale-item-row">
                             <div class="form-group"><label>Product</label><select class="form-control sale-item-select" required></select></div>
                             <div class="form-group"><label>Qty</label><input type="number" class="form-control sale-item-qty" required min="1"></div>
+                            <div class="form-group" style="grid-column: 1 / -1;"><label>Custom Unit Price (Opt)</label><input type="number" step="0.01" class="form-control sale-item-price" placeholder="Leave blank to use default"></div>
                         </div>
                     </div>
                     
@@ -352,6 +353,7 @@
                         <div class="form-row purch-item-row">
                             <div class="form-group"><label>Product</label><select class="form-control purch-item-select" required></select></div>
                             <div class="form-group"><label>Qty Added</label><input type="number" class="form-control purch-item-qty" required min="1"></div>
+                            <div class="form-group" style="grid-column: 1 / -1;"><label>New Purch. Price (Opt)</label><input type="number" step="0.01" class="form-control purch-item-price" placeholder="Leave blank to keep current cost"></div>
                         </div>
                     </div>
                     
@@ -493,7 +495,9 @@
                 if(!app.loans) app.loans = [];
                 refresh();
             } else { 
-                saveToCloud(); 
+                // CRITICAL FIX: DO NOT auto-save here! This caused the wipe.
+                app = { inventory: [], sales: [], purchases: [], loans: [] };
+                refresh(); 
             }
         }, (error) => { 
             document.getElementById('cloud-loader').innerHTML = "Database Connection Error. Please refresh.";
@@ -569,7 +573,7 @@
             const container = document.getElementById('sales-items-container');
             const row = document.createElement('div');
             row.className = 'form-row sale-item-row';
-            row.innerHTML = `<div class="form-group"><label>Product</label><select class="form-control sale-item-select" required>${window.dropdownOpts}</select></div><div class="form-group"><label>Qty</label><input type="number" class="form-control sale-item-qty" required min="1"></div>`;
+            row.innerHTML = `<div class="form-group"><label>Product</label><select class="form-control sale-item-select" required>${window.dropdownOpts}</select></div><div class="form-group"><label>Qty</label><input type="number" class="form-control sale-item-qty" required min="1"></div><div class="form-group" style="grid-column: 1 / -1;"><label>Custom Unit Price (Opt)</label><input type="number" step="0.01" class="form-control sale-item-price" placeholder="Leave blank to use default"></div>`;
             container.appendChild(row);
         }
 
@@ -577,7 +581,7 @@
             const container = document.getElementById('purchases-items-container');
             const row = document.createElement('div');
             row.className = 'form-row purch-item-row';
-            row.innerHTML = `<div class="form-group"><label>Product</label><select class="form-control purch-item-select" required>${window.dropdownOpts}</select></div><div class="form-group"><label>Qty Added</label><input type="number" class="form-control purch-item-qty" required min="1"></div>`;
+            row.innerHTML = `<div class="form-group"><label>Product</label><select class="form-control purch-item-select" required>${window.dropdownOpts}</select></div><div class="form-group"><label>Qty Added</label><input type="number" class="form-control purch-item-qty" required min="1"></div><div class="form-group" style="grid-column: 1 / -1;"><label>New Purch. Price (Opt)</label><input type="number" step="0.01" class="form-control purch-item-price" placeholder="Leave blank to keep current cost"></div>`;
             container.appendChild(row);
         }
 
@@ -629,16 +633,47 @@
             const dates = Object.keys(groups).sort().reverse();
             document.getElementById('sales-history-container').innerHTML = dates.map(date => {
                 const total = groups[date].reduce((sum, s) => sum + s.total, 0);
-                return `<div class="panel" style="padding:0; overflow:hidden; margin-bottom:20px;"><div class="group-header" onclick="this.nextElementSibling.classList.toggle('open')"><div><b>📅 ${date}</b></div><div style="color:var(--success); font-weight:bold;">Total: ${formatMoney(total)} ▼</div></div><div class="group-details"><div class="table-container"><table><thead><tr><th>Client</th><th>Item</th><th>Qty</th><th>Total</th><th></th></tr></thead><tbody>${groups[date].map(s => `<tr><td>${s.customer||'-'}</td><td>${getItemName(s.itemId)}</td><td>${s.qty}</td><td>${formatMoney(s.total)}</td><td style="display:flex; gap:5px;"><button class="btn btn-primary btn-sm" onclick="printReceipt('${s.id}')">Print</button><button class="btn btn-danger btn-sm" onclick="deleteSale('${s.id}')">Delete</button></td></tr>`).join('')}</tbody></table></div></div></div>`;
+                return `
+                <div class="panel" style="padding:0; overflow:hidden; margin-bottom:20px;">
+                    <div class="group-header" onclick="this.nextElementSibling.classList.toggle('open')">
+                        <div><b>📅 ${date}</b></div>
+                        <div style="color:var(--success); font-weight:bold;">Total: ${formatMoney(total)} ▼</div>
+                    </div>
+                    <div class="group-details">
+                        <div class="table-container">
+                            <table>
+                                <thead><tr><th>Client</th><th>Item</th><th>Qty</th><th>Total</th><th></th></tr></thead>
+                                <tbody>
+                                    ${groups[date].map(s => `<tr><td>${s.customer||'-'}</td><td>${getItemName(s.itemId)}</td><td>${s.qty}</td><td>${formatMoney(s.total)}</td><td style="display:flex; gap:5px;"><button class="btn btn-primary btn-sm" onclick="printReceipt('${s.id}')">Print</button><button class="btn btn-danger btn-sm" onclick="deleteSale('${s.id}')">Delete</button></td></tr>`).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>`;
             }).join('') || '<div style="padding:20px;">No sales found.</div>';
         }
 
         function renderPurchaseHistory() {
             const groups = {}; app.purchases.forEach(p => { if(!groups[p.date]) groups[p.date] = []; groups[p.date].push(p); });
             const dates = Object.keys(groups).sort().reverse();
-            document.getElementById('purchase-history-container').innerHTML = dates.map(date => {
-                return `<div class="panel" style="padding:0; overflow:hidden; margin-bottom:20px;"><div class="group-header" onclick="this.nextElementSibling.classList.toggle('open')"><div><b>📅 ${date}</b></div><div style="font-size:0.9rem;">${groups[date].length} Entries ▼</div></div><div class="group-details"><div class="table-container"><table><thead><tr><th>Supplier</th><th>Item</th><th>Qty Added</th><th></th></tr></thead><tbody>${groups[date].map(p => `<tr><td>${p.supplier||'-'}</td><td>${getItemName(p.itemId)}</td><td>${p.qty}</td><td><button class="btn btn-danger btn-sm" onclick="deletePurchase('${p.id}')">Delete</button></td></tr>`).join('')}</tbody></table></div></div></div>`;
-            }).join('') || '<div style="padding:20px;">No entries found.</div>';
+            document.getElementById('purchase-history-container').innerHTML = dates.map(date => `
+                <div class="panel" style="padding:0; overflow:hidden; margin-bottom:20px;">
+                    <div class="group-header" onclick="this.nextElementSibling.classList.toggle('open')">
+                        <div><b>📅 ${date}</b></div>
+                        <div style="font-size:0.9rem;">${groups[date].length} Entries ▼</div>
+                    </div>
+                    <div class="group-details">
+                        <div class="table-container">
+                            <table>
+                                <thead><tr><th>Supplier</th><th>Item</th><th>Qty Added</th><th></th></tr></thead>
+                                <tbody>
+                                    ${groups[date].map(p => `<tr><td>${p.supplier||'-'}</td><td>${getItemName(p.itemId)}</td><td>${p.qty}</td><td><button class="btn btn-danger btn-sm" onclick="deletePurchase('${p.id}')">Delete</button></td></tr>`).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            `).join('') || '<div style="padding:20px;">No entries found.</div>';
         }
 
         function duplicateItem(id) {
@@ -692,11 +727,12 @@
             rows.forEach(row => {
                 const id = row.querySelector('.sale-item-select').value;
                 const qty = parseInt(row.querySelector('.sale-item-qty').value);
+                const customPrice = parseFloat(row.querySelector('.sale-item-price').value);
                 if(!id || isNaN(qty)) return;
                 
                 const item = app.inventory.find(i => i.id == id);
                 if(item && item.qty >= qty) {
-                    itemsToProcess.push({ item, qty, id });
+                    itemsToProcess.push({ item, qty, id, customPrice });
                 } else {
                     allValid = false;
                     alert(`Not enough stock for ${item ? item.dimensions : 'selected item'}!`);
@@ -706,14 +742,15 @@
             if(allValid && itemsToProcess.length > 0) {
                 itemsToProcess.forEach((p, index) => {
                     p.item.qty -= p.qty;
+                    const finalPrice = !isNaN(p.customPrice) ? p.customPrice : p.item.price;
                     app.sales.push({ 
                         id: Date.now().toString() + index, 
                         date: date, 
                         itemId: p.id, 
                         qty: p.qty, 
                         customer: customer, 
-                        total: p.qty * p.item.price, 
-                        priceAtSale: p.item.price 
+                        total: p.qty * finalPrice, 
+                        priceAtSale: finalPrice 
                     });
                 });
                 
@@ -726,6 +763,7 @@
                     <div class="form-row sale-item-row">
                         <div class="form-group"><label>Product</label><select class="form-control sale-item-select" required>${window.dropdownOpts}</select></div>
                         <div class="form-group"><label>Qty</label><input type="number" class="form-control sale-item-qty" required min="1"></div>
+                        <div class="form-group" style="grid-column: 1 / -1;"><label>Custom Unit Price (Opt)</label><input type="number" step="0.01" class="form-control sale-item-price" placeholder="Leave blank to use default"></div>
                     </div>`;
                 setDates(); 
             }
@@ -742,11 +780,15 @@
             rows.forEach((row, index) => {
                 const id = row.querySelector('.purch-item-select').value;
                 const qty = parseInt(row.querySelector('.purch-item-qty').value);
+                const customPurchPrice = parseFloat(row.querySelector('.purch-item-price').value);
                 if(!id || isNaN(qty)) return;
                 
                 const item = app.inventory.find(i => i.id == id);
                 if(item) { 
                     item.qty += qty; 
+                    if(!isNaN(customPurchPrice)) {
+                        item.purchPrice = customPurchPrice; // Update master inventory
+                    }
                     app.purchases.push({ 
                         id: Date.now().toString() + index, 
                         date: date, 
@@ -768,6 +810,7 @@
                     <div class="form-row purch-item-row">
                         <div class="form-group"><label>Product</label><select class="form-control purch-item-select" required>${window.dropdownOpts}</select></div>
                         <div class="form-group"><label>Qty Added</label><input type="number" class="form-control purch-item-qty" required min="1"></div>
+                        <div class="form-group" style="grid-column: 1 / -1;"><label>New Purch. Price (Opt)</label><input type="number" step="0.01" class="form-control purch-item-price" placeholder="Leave blank to keep current cost"></div>
                     </div>`;
                 setDates();
             }
